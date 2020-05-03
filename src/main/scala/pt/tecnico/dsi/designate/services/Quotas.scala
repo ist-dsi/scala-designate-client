@@ -11,13 +11,13 @@ class Quotas[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Clien
   import dsl._
 
   def get(projectId: String): F[Quota] =
-    client.expect[Quota](GET(uri / projectId, authToken))
+    client.expect(GET(uri / projectId, authToken))
 
   def update(projectId: String, quota: Quota): F[Quota] =
-    client.expect[Quota](PATCH(uri / projectId, authToken))
+    client.expect(PATCH(quota, uri / projectId, authToken))
 
-  def get: F[Quota] = client.expect[Quota](GET(uri, authToken))
+  def get: F[Quota] = client.expect(GET(uri, authToken))
 
   def reset(projectId: String): F[Unit] =
-    client.expect[Unit](DELETE(uri / projectId, authToken))
+    client.expect(DELETE(uri / projectId, authToken))
 }

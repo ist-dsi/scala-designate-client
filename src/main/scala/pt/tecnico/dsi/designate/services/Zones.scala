@@ -7,16 +7,17 @@ import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.designate.models.{Nameserver, WithId, Zone, ZoneTransferAccept, ZoneTransferRequest}
 
 final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
-    extends CRUDService[F, Zone](baseUri, "zone", authToken) {
-
-  import dsl._
+    extends CRUDService[F, Zone](baseUri, "zone", authToken) { self =>
 
   def listGroups(id: String): Stream[F, Nameserver] =
     genericList[Nameserver]("nameservers", uri / id / "nameservers")
 
   def recordsets(id: String): Recordsets[F] = new Recordsets[F](uri / id / "recordsets", authToken)
 
-  val tasks: Uri = uri / "tasks"
-  val transferRequests = new ZoneTransferRequests[F](tasks / "transfer_requests", authToken)
-  val transferAccepts = new ZoneTransferAccepts[F](tasks / "transfer_accepts", authToken)
+  object tasks {
+    val uri: Uri = self.uri / "tasks"
+    val transferRequests = new ZoneTransferRequests[F](uri, authToken)
+    val transferAccepts = new ZoneTransferAccepts[F](uri, authToken)
+  }
+
 }

@@ -20,9 +20,9 @@ abstract class CRUDService[F[_]: Sync: Client, T: Codec](baseUri: Uri, val name:
   override val uri: Uri = baseUri / pluralName
 
   /** Takes a request and unwraps its return value. */
-  protected def unwrap(request: F[Request[F]]): F[WithId[T]] = client.expect[Map[String, WithId[T]]](request).map(_.apply(name))
+  protected def unwrap(request: F[Request[F]]): F[WithId[T]] = unwrap(request, name)
   /** Puts a value inside a wrapper. */
-  protected def wrap(value: T): Map[String, T] = Map(name -> value)
+  protected def wrap(value: T): Map[String, T] = wrap(value, name)
 
   def list(): Stream[F, WithId[T]] = genericList[WithId[T]](pluralName, uri, Query.empty)
   def list(query: Query): Stream[F, WithId[T]] = genericList[WithId[T]](pluralName, uri, query)
@@ -36,21 +36,11 @@ abstract class CRUDService[F[_]: Sync: Client, T: Codec](baseUri: Uri, val name:
       case response => F.raiseError(UnexpectedStatus(response.status))
     }
 
-  def get(id: String): F[WithId[T]] = unwrap(GET(uri / id, authToken))
+  def get(id: String): F[WithId[T]] = genericGet(name, id)
 
   def update(value: WithId[T]): F[WithId[T]] = update(value.id, value.model)
-  def update(id: String, value: T): F[WithId[T]] = unwrap(PATCH(wrap(value), uri / id, authToken))
+  def update(id: String, value: T): F[WithId[T]] = genericUpdate(name, id, value)
 
   def delete(value: WithId[T]): F[Unit] = delete(value.id)
   def delete(id: String): F[Unit] = genericDelete(uri / id)
-
-  def disable(id: String)(implicit ev: T <:< Enabler[T]): F[Unit] = updateEnable(id, value = false)
-  def enable(id: String)(implicit ev: T <:< Enabler[T]): F[Unit] = updateEnable(id, value = true)
-
-  private def updateEnable(id: String, value: Boolean)(implicit ev: T <:< Enabler[T]) : F[Unit] = {
-    for {
-      obj <- get(id)
-      _ <- update(obj.id, ev(obj.model).withEnabled(value))
-    } yield ()
-  }
 }

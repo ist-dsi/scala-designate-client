@@ -8,6 +8,8 @@ import io.circe.derivation.{deriveCodec, deriveEncoder, renaming}
 import pt.tecnico.dsi.keystone.models.Interface
 import pt.tecnico.dsi.keystone.models.auth.Credential
 
+import scala.concurrent.duration.FiniteDuration
+
 sealed trait Status extends EnumEntry
 case object Status extends Enum[Status] {
 

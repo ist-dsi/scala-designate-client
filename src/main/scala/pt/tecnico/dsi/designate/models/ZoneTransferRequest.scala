@@ -18,7 +18,7 @@ case class ZoneTransferRequest (
   zoneName: String,
   createdAt: OffsetDateTime,
   updatedAt: Option[OffsetDateTime],
-  targetProjectId: String,
+  targetProjectId: Option[String],
   version: Integer,
   zoneTransferRequestId: String
 )

@@ -11,7 +11,7 @@ import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.dsl.impl.Methods
 import org.http4s.{Header, Query, Request, Response, Status, Uri}
-import pt.tecnico.dsi.keystone.models.WithId
+import pt.tecnico.dsi.designate.models.WithId
 
 abstract class BaseService[F[_]](protected val authToken: Header)(implicit protected val client: Client[F], protected val F: Sync[F]) {
   val uri: Uri
