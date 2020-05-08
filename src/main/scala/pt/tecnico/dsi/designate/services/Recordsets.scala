@@ -6,6 +6,4 @@ import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.designate.models.Recordset
 
 final class Recordsets[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
-    extends CRUDService[F, Recordset](baseUri, "recordset", authToken) {
-
-}
+  extends CRUDService[F, Recordset](baseUri, "recordset", authToken)

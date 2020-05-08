@@ -1,14 +1,12 @@
 package pt.tecnico.dsi.designate.services
 
 import cats.effect.Sync
-import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Stream
 import io.circe.Codec
 import org.http4s.Status.{Conflict, Successful}
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.{Header, Query, Request, Response, Uri}
-import pt.tecnico.dsi.keystone.models.Enabler
 import pt.tecnico.dsi.designate.models.WithId
 
 abstract class CRUDService[F[_]: Sync: Client, T: Codec](baseUri: Uri, val name: String, authToken: Header)

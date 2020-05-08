@@ -1,9 +1,9 @@
 package pt.tecnico.dsi.designate.services
 
 import cats.effect.Sync
+import fs2.Stream
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import fs2.Stream
 import pt.tecnico.dsi.designate.models.{FloatingIP, WithId}
 
 class FloatingIPs[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F])

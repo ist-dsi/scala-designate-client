@@ -4,13 +4,13 @@ import cats.effect.Sync
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Stream}
-import io.circe.{Codec, Decoder, Encoder, HCursor}
+import io.circe.{Codec, Decoder, HCursor}
 import org.http4s.Status.{NotFound, Successful}
 import org.http4s.circe.decodeUri
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.dsl.impl.Methods
-import org.http4s.{Header, Query, Request, Response, Status, Uri}
+import org.http4s.{Header, Query, Request, Uri}
 import pt.tecnico.dsi.designate.models.WithId
 
 abstract class BaseService[F[_]](protected val authToken: Header)(implicit protected val client: Client[F], protected val F: Sync[F]) {

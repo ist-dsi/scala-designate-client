@@ -1,7 +1,6 @@
 package pt.tecnico.dsi.designate.models
 
 import java.time.OffsetDateTime
-
 import cats.effect.Sync
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}

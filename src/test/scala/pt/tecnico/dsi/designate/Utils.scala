@@ -1,9 +1,11 @@
 package pt.tecnico.dsi.designate
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{ExecutionContext, Future}
 import cats.effect.{ContextShift, IO, Timer}
 import cats.instances.list._
 import cats.syntax.traverse._
-import cats.syntax.flatMap._
 import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -13,13 +15,7 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 import pt.tecnico.dsi.keystone.KeystoneClient
-import pt.tecnico.dsi.keystone.models.Scope
-import pt.tecnico.dsi.keystone.models.auth.{Credential, Domain, Project}
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ExecutionContext, Future}
-import scala.sys.process._
+import pt.tecnico.dsi.keystone.models.{CatalogEntry, Interface, ScopedSession}
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
   val logger: Logger = getLogger
@@ -38,22 +34,15 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
 
   implicit val httpClient: Client[IO] = _httpClient
 
-  val ignoreStdErr = ProcessLogger(_ => ())
-  val openstackEnvVariableRegex = """(?<=\+\+ )(OS_[A-Z_]+)=([^\n]+)""".r.unanchored
-  val dockerLogLines = "docker logs dev-keystone".lazyLines(ignoreStdErr)
-  val dockerVars = dockerLogLines.collect {
-    case openstackEnvVariableRegex(key, value) => key -> value
-  }.toMap
+  val keystoneClient: IO[KeystoneClient[IO]] = KeystoneClient.fromEnvironment()
 
-  val scopedClient: IO[KeystoneClient[IO]] = KeystoneClient[IO](Uri.unsafeFromString(dockerVars("OS_AUTH_URL")))
-    .authenticateWithPassword(
-      Credential(dockerVars("OS_USERNAME"), dockerVars("OS_PASSWORD"), Domain.id(dockerVars("OS_USER_DOMAIN_ID"))),
-      Scope(Project(dockerVars("OS_PROJECT_NAME"), Domain.id(dockerVars("OS_PROJECT_DOMAIN_ID"))))
-    )
-  val unscopedClient: IO[KeystoneClient[IO]] = KeystoneClient[IO](Uri.unsafeFromString(dockerVars("OS_AUTH_URL")))
-    .authenticateWithPassword(
-      Credential(dockerVars("OS_USERNAME"), dockerVars("OS_PASSWORD"), Domain.id(dockerVars("OS_USER_DOMAIN_ID")))
-    )
+  val designateClient: IO[DesignateClient[IO]] = for {
+    keystone <- keystoneClient
+    // Keystone should be smarter and not require us to do this cast
+    catalog = keystone.session.asInstanceOf[ScopedSession].catalog
+    designateUrlOpt = catalog.collectFirst { case entry @ CatalogEntry("dns", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public) }.flatten
+    designateUrl <- IO.fromEither(designateUrlOpt.toRight(new Throwable("Could not find \"dns\" service in the catalog")))
+  } yield new DesignateClient[IO](Uri.unsafeFromString(designateUrl), keystone.authToken)
 
   implicit class RichIO[T](io: IO[T]) {
     def value(test: T => Assertion): IO[Assertion] = io.map(test)
@@ -92,6 +81,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
     def valueShouldIdempotentlyBe(value: T): IO[Assertion] = idempotently(_ shouldBe value)
   }
 
+  import scala.language.implicitConversions
   implicit def io2Future[T](io: IO[T]): Future[T] = io.unsafeToFuture()
 
   private def ordinalSuffix(number: Int): String = {
@@ -103,15 +93,15 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
     }
   }
 
-  def idempotently(test: KeystoneClient[IO] => IO[Assertion], repetitions: Int = 3): Future[Assertion] = {
+  def idempotently(test: DesignateClient[IO] => IO[Assertion], repetitions: Int = 3): Future[Assertion] = {
     require(repetitions >= 2, "To test for idempotency at least 2 repetitions must be made")
 
     // If the first run fails we do not want to mask its exception, because failing in the first attempt means
     // whatever is being tested in `test` is not implemented correctly.
-    scopedClient.flatMap(test).unsafeToFuture().flatMap { _ =>
+    designateClient.flatMap(test).unsafeToFuture().flatMap { _ =>
       // For the subsequent iterations we mask TestFailed with "Operation is not idempotent"
       Future.traverse(2 to repetitions) { repetition =>
-        scopedClient.flatMap(test).unsafeToFuture().transform(identity, {
+        designateClient.flatMap(test).unsafeToFuture().transform(identity, {
           case e: TestFailedException =>
             val text = s"$repetition${ordinalSuffix(repetition)}"
             e.modifyMessage(_.map(m => s"Operation is not idempotent. On $text repetition got:\n$m"))

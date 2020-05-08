@@ -13,17 +13,12 @@ final class ZoneTransferAccepts[F[_]: Sync](baseUri: Uri, authToken: Header)(imp
 
   override val uri: Uri = baseUri / "transfer_accepts"
 
-  def create(key: String, zoneTransferRequestId: String): F[WithId[ZoneTransferAccept]]
-  = client.expect[WithId[ZoneTransferAccept]](
-    POST(
-      Map("key" -> key, "zone_transfer_request_id" -> zoneTransferRequestId).asJson,
-      uri,
-      authToken)
-  )
+  def create(key: String, zoneTransferRequestId: String): F[WithId[ZoneTransferAccept]] = {
+    val body = Map("key" -> key, "zone_transfer_request_id" -> zoneTransferRequestId)
+    client.expect(POST(body.asJson, uri, authToken))
+  }
 
-  def list: Stream[F, WithId[ZoneTransferAccept]] =
-    genericList[WithId[ZoneTransferAccept]]("transfer_accepts", uri)
+  def list: Stream[F, WithId[ZoneTransferAccept]] = genericList[WithId[ZoneTransferAccept]]("transfer_accepts", uri)
 
-  def get(zoneTransferAcceptId: String): F[WithId[ZoneTransferAccept]] =
-    client.expect[WithId[ZoneTransferAccept]](GET(uri / zoneTransferAcceptId, authToken))
+  def get(zoneTransferAcceptId: String): F[WithId[ZoneTransferAccept]] = client.expect(GET(uri / zoneTransferAcceptId, authToken))
 }
