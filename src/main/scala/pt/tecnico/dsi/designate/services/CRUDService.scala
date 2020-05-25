@@ -12,6 +12,9 @@ import pt.tecnico.dsi.designate.models.WithId
 abstract class CRUDService[F[_]: Sync: Client, T: Codec](baseUri: Uri, val name: String, authToken: Header)
   extends BaseService[F](authToken) {
 
+  type U
+  type C
+
   import dsl._
 
   val pluralName = s"${name}s"
@@ -25,10 +28,10 @@ abstract class CRUDService[F[_]: Sync: Client, T: Codec](baseUri: Uri, val name:
   def list(): Stream[F, WithId[T]] = genericList[WithId[T]](pluralName, uri, Query.empty)
   def list(query: Query): Stream[F, WithId[T]] = genericList[WithId[T]](pluralName, uri, query)
 
-  def create(value: T): F[WithId[T]] = unwrap(POST(wrap(value), uri, authToken))
+  def create(value: C)(implicit codec: Codec[C]): F[WithId[T]] = unwrap(POST(value, uri, authToken))
 
-  protected def createHandleConflict(value: T)(onConflict: Response[F] => F[WithId[T]]): F[WithId[T]] =
-    client.fetch(POST(wrap(value), uri, authToken)){
+  protected def createHandleConflict(value: C)(onConflict: Response[F] => F[WithId[T]])(implicit codec: Codec[C]): F[WithId[T]] =
+    client.fetch(POST(value, uri, authToken)) {
       case Successful(response) => response.as[Map[String, WithId[T]]].map(_.apply(name))
       case Conflict(response) => onConflict(response)
       case response => F.raiseError(UnexpectedStatus(response.status))
@@ -36,8 +39,7 @@ abstract class CRUDService[F[_]: Sync: Client, T: Codec](baseUri: Uri, val name:
 
   def get(id: String): F[WithId[T]] = genericGet(name, id)
 
-  def update(value: WithId[T]): F[WithId[T]] = update(value.id, value.model)
-  def update(id: String, value: T): F[WithId[T]] = genericUpdate(name, id, value)
+  def update(id: String, value: U)(implicit codec: Codec[U]): F[WithId[T]] = genericUpdate(name, id, value)
 
   def delete(value: WithId[T]): F[Unit] = delete(value.id)
   def delete(id: String): F[Unit] = genericDelete(uri / id)

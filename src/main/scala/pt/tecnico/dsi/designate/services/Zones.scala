@@ -4,10 +4,14 @@ import cats.effect.Sync
 import fs2.Stream
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.designate.models.{Nameserver, Zone}
+import pt.tecnico.dsi.designate.models.{Nameserver, Zone, ZoneCreate, ZoneUpdate}
 
 final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
-  extends CRUDService[F, Zone](baseUri, "zone", authToken) { self =>
+  extends CRUDService[F, Zone](baseUri, "zone", authToken) {
+  self =>
+
+  override type C = ZoneCreate
+  override type U = ZoneUpdate
 
   def listGroups(id: String): Stream[F, Nameserver] =
     genericList[Nameserver]("nameservers", uri / id / "nameservers")
@@ -19,4 +23,6 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
     val transferRequests: ZoneTransferRequests[F] = new ZoneTransferRequests(uri, authToken)
     val transferAccepts: ZoneTransferAccepts[F] = new ZoneTransferAccepts(uri, authToken)
   }
+
 }
+
