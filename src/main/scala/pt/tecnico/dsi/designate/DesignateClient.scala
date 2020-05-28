@@ -17,6 +17,7 @@ class DesignateClient[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit clie
 
   val zones = new Zones[F](uri, authToken)
   val quotas = new Quotas[F](uri, authToken)
+  val floatingIps = new FloatingIPs[F](uri, authToken)
 
   def limits: F[Limit] = client.expect(GET(uri / "limits", authToken))
   def recordsets: Stream[F, WithId[Recordset]] = new Recordsets[F](uri, authToken).list()

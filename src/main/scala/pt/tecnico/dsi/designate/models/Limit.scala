@@ -15,6 +15,6 @@ case class Limit(
   maxZoneRecords: Integer,
   maxZoneRecordsets: Integer,
   maxZones: Integer,
-  minTtl: Integer,
+  minTtl: Option[Integer]
 )
 
