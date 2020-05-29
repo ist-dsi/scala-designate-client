@@ -16,9 +16,9 @@ class FloatingIPsSpec extends Utils {
         client <- keystoneClient
         designate <- designateClient
         // Get sample region
-        region <- client.regions.list().compile.toList.map(_.head)
+        region <- client.regions.list().head.compile.lastOrError
         // Get sample floatingip
-        floatingIp <- designate.floatingIps.list.compile.toList.map(_.head)
+        floatingIp <- designate.floatingIps.list.head.compile.lastOrError
         _ <- designate.floatingIps.get(region.id, floatingIp.id)
       } yield assert(true)
     }
@@ -37,9 +37,9 @@ class FloatingIPsSpec extends Utils {
         client <- keystoneClient
         designate <- designateClient
         // Get sample region
-        region <- client.regions.list().compile.toList.map(_.head)
+        region <- client.regions.list().head.compile.lastOrError
         // Get sample floatingip
-        floatingIp <- designate.floatingIps.list.compile.toList.map(_.head)
+        floatingIp <- designate.floatingIps.list.head.compile.lastOrError
         _ <- designate.floatingIps.set(region.id, floatingIp.id, dummyFloatingIp)
       } yield assert(true)
     }
@@ -49,9 +49,9 @@ class FloatingIPsSpec extends Utils {
         client <- keystoneClient
         designate <- designateClient
         // Get sample region
-        region <- client.regions.list().compile.toList.map(_.head)
+        region <- client.regions.list().head.compile.lastOrError
         // Get sample floatingip
-        floatingIp <- designate.floatingIps.list.compile.toList.map(_.head)
+        floatingIp <- designate.floatingIps.list.head.compile.lastOrError
         _ <- designate.floatingIps.unset(region.id, floatingIp.id)
       } yield assert(true)
     }

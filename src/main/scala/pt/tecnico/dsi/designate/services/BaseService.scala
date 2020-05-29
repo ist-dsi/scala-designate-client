@@ -4,13 +4,13 @@ import cats.effect.Sync
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Stream}
-import io.circe.{Codec, Decoder, HCursor}
+import io.circe.{Codec, Decoder, Encoder, HCursor}
 import org.http4s.Status.{NotFound, Successful}
 import org.http4s.circe.decodeUri
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.dsl.impl.Methods
-import org.http4s.{Header, Query, Request, Uri}
+import org.http4s.{EntityDecoder, Header, Query, Request, Uri}
 import pt.tecnico.dsi.designate.models.WithId
 
 abstract class BaseService[F[_]](protected val authToken: Header)(implicit protected val client: Client[F], protected val F: Sync[F]) {
@@ -21,7 +21,7 @@ abstract class BaseService[F[_]](protected val authToken: Header)(implicit prote
   protected def unwrap[T: Codec](request: F[Request[F]], name: String): F[WithId[T]] =
     client.expect[Map[String, WithId[T]]](request).map(_.apply(name))
 
-  protected def wrap[T: Codec](value: T, name: String): Map[String, T] = Map(name -> value)
+  protected def wrap[T: Encoder](value: T, name: String): Map[String, T] = Map(name -> value)
 
   protected def genericGet[T: Codec](name: String, id: String): F[WithId[T]] =
     unwrap(GET(uri / id, authToken), name)

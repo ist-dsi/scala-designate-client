@@ -15,7 +15,7 @@ class QuotasSpec extends Utils {
       for {
         // We need a sample project
         keystone <- keystoneClient
-        project <- keystone.projects.list().compile.toList.map(_.head)
+        project <- keystone.projects.list().head.compile.lastOrError
         client <- designateClient
         _ <- client.quotas.reset(project.id)
       } yield assert(true)
@@ -24,7 +24,7 @@ class QuotasSpec extends Utils {
     "get project quotas" in {
       for {
         keystone <- keystoneClient
-        project <- keystone.projects.list().compile.toList.map(_.head)
+        project <- keystone.projects.list().head.compile.lastOrError
         client <- designateClient
         _ <- client.quotas.get(project.id)
       } yield assert(true)
@@ -41,7 +41,7 @@ class QuotasSpec extends Utils {
     "update project quotas" in {
       for {
         keystone <- keystoneClient
-        project <- keystone.projects.list().compile.toList.map(_.head)
+        project <- keystone.projects.list().head.compile.lastOrError
         client <- designateClient
         _ <- client.quotas.update(project.id, dummyQuota)
       } yield assert(true)
