@@ -1,5 +1,6 @@
 package pt.tecnico.dsi.designate
 
+import cats.effect.IO
 import pt.tecnico.dsi.designate.models.{Zone, ZoneCreate, ZoneUpdate}
 
 class ZonesSpec extends Utils {
@@ -36,28 +37,19 @@ class ZonesSpec extends Utils {
       }
     }
 
+    "update zone" in {
+      for {
+        client <- designateClient
+        expected <- client.zones.create(dummyZoneCreate)
+        _ <- client.zones.update(expected.id, dummyZoneUpdate)
+      } yield assert(true)
+    }
+
     "get zone" in {
       for {
         client <- designateClient
         expected <- client.zones.create(dummyZoneCreate)
         _ <- client.zones.get(expected.id)
-      } yield assert(true)
-    }
-
-    "delete zone" in {
-      for {
-        client <- designateClient
-        expected <- client.zones.create(dummyZoneCreate)
-        _ <- client.zones.delete(expected.id)
-      } yield assert(true)
-    }
-
-    "update zone" in {
-      for {
-        client <- designateClient
-        expected <- client.zones.create(dummyZoneCreate)
-        // TODO: Getting 400 here
-        _ <- client.zones.update(expected.id, dummyZoneUpdate)
       } yield assert(true)
     }
 
@@ -69,5 +61,12 @@ class ZonesSpec extends Utils {
       } yield assert(true)
     }
 
+    "delete zone" in {
+      for {
+        client <- designateClient
+        expected <- client.zones.create(dummyZoneCreate)
+        _ <- client.zones.delete(expected.id)
+      } yield assert(true)
+    }
   }
 }

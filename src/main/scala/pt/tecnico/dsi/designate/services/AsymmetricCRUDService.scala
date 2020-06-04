@@ -6,7 +6,7 @@ import fs2.Stream
 import io.circe.Codec
 import org.http4s.Status.{Conflict, Successful}
 import org.http4s.client.{Client, UnexpectedStatus}
-import org.http4s.{Header, Query, Request, Response, Uri}
+import org.http4s.{Header, Query, Response, Uri}
 import pt.tecnico.dsi.designate.models.WithId
 
 abstract class AsymmetricCRUDService[F[_]: Sync: Client, Model: Codec](baseUri: Uri, val name: String, authToken: Header)

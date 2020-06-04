@@ -13,7 +13,7 @@ object Recordset {
 case class Recordset(
   projectId: String,
   name: String,
-  ttl: Integer,
+  ttl: Option[Int],
   status: Status,
   action: Action,
   zoneId: String,
@@ -22,7 +22,7 @@ case class Recordset(
   `type`: String,
   version: Integer,
   createdAt: OffsetDateTime,
-  updatedAt: OffsetDateTime,
+  updatedAt: Option[OffsetDateTime],
   records: Seq[String]
 ) {
   def zone[F[_]: Sync](implicit d: DesignateClient[F]): F[WithId[Zone]] = d.zones.get(zoneId)
