@@ -7,7 +7,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.designate.DesignateClient
 
 object Recordset {
-  implicit val codec: Codec.AsObject[Recordset] = deriveCodec[Recordset](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Recordset] = deriveCodec(renaming.snakeCase)
 }
 
 case class Recordset(

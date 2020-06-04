@@ -8,6 +8,6 @@ import org.http4s.{Header, Uri}
 abstract class CRUDService[F[_]: Sync: Client, T: Codec](baseUri: Uri, name: String, authToken: Header)
   extends AsymmetricCRUDService[F, T](baseUri, name, authToken) {
 
-  type U = T
-  type C = T
+  type Update = T
+  type Create = T
 }

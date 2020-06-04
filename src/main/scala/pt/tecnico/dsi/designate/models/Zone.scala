@@ -18,15 +18,15 @@ object Zone {
     val values: IndexedSeq[Type] = findValues
   }
 
-  implicit val codec: Codec[Zone] = deriveCodec[Zone](renaming.snakeCase, false, None)
+  implicit val codec: Codec[Zone] = deriveCodec(renaming.snakeCase)
 }
 
 object ZoneCreate {
-  implicit val codec: Codec[ZoneCreate] = deriveCodec[ZoneCreate](renaming.snakeCase, false, None)
+  implicit val codec: Codec[ZoneCreate] = deriveCodec(renaming.snakeCase)
 }
 
 object ZoneUpdate {
-  implicit val codec: Codec[ZoneUpdate] = deriveCodec[ZoneUpdate](renaming.snakeCase, false, None)
+  implicit val codec: Codec[ZoneUpdate] = deriveCodec(renaming.snakeCase)
 }
 
 case class ZoneCreate(
