@@ -1,5 +1,7 @@
 # Created by https://www.gitignore.io/api/vim,emacs,linux,osx,windows,intellij,eclipse,sublimetext,sbt,scala,java,maven,playframework
 
+openstack-openrc.sh
+
 ### Vim ###
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
