@@ -1,9 +1,10 @@
 package pt.tecnico.dsi.designate.models
 
-import java.time.OffsetDateTime
+import java.time.{LocalDateTime, OffsetDateTime}
+
 import enumeratum.{Circe, Enum, EnumEntry}
-import io.circe.derivation.{deriveCodec, renaming}
 import io.circe.{Codec, Decoder, Encoder}
+import io.circe.derivation.{deriveCodec, renaming}
 
 object Zone {
   sealed trait Type extends EnumEntry
@@ -17,24 +18,48 @@ object Zone {
     val values: IndexedSeq[Type] = findValues
   }
 
-  implicit val codec: Codec.AsObject[Zone] = deriveCodec[Zone](renaming.snakeCase, false, None)
+  implicit val codec: Codec[Zone] = deriveCodec(renaming.snakeCase)
 }
+
+object ZoneCreate {
+  implicit val codec: Codec[ZoneCreate] = deriveCodec(renaming.snakeCase)
+}
+
+object ZoneUpdate {
+  implicit val codec: Codec[ZoneUpdate] = deriveCodec(renaming.snakeCase)
+}
+
+case class ZoneCreate(
+  name: String,
+  email: String,
+  ttl: Option[Integer] = None,
+  description: Option[String] = None,
+  masters: Option[Seq[String]] = None,
+  `type`: Option[Zone.Type] = None,
+  attributes: Option[Map[String, String]] = None
+)
+
+case class ZoneUpdate(
+ email: Option[String] = None,
+ ttl: Option[Integer] = None,
+ description: Option[String] = None
+)
 
 case class Zone(
   name: String,
   email: String,
-  status: Option[Status] = None,
-  action: Option[Action] = None,
-  transferredAt: Option[OffsetDateTime] = None,
-  version: Option[Integer] = None,
-  TTL: Option[Integer] = None,
+  status: Status,
+  action: Action,
+  version: Integer,
+  createdAt: LocalDateTime,
+  serial: Integer,
+  poolId: String,
+  projectId: String,
+  transferredAt: Option[LocalDateTime] = None,
+  updatedAt: Option[LocalDateTime] = None,
+  ttl: Option[Integer] = None,
   description: Option[String] = None,
   `type`: Option[Zone.Type] = None,
   masters: Option[Seq[String]] = None,
   attributes: Option[Map[String, String]] = None,
-  serial: Option[String] = None,
-  updatedAt: Option[OffsetDateTime] = None,
-  createdAt: Option[OffsetDateTime] = None,
-  poolId: Option[String] = None,
-  projectId: Option[String] = None
 )

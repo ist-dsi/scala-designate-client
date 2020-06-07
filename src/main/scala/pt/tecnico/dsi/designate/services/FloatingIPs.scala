@@ -12,7 +12,7 @@ class FloatingIPs[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: 
   override val uri: Uri = baseUri / "reverse" / "floatingips"
   import dsl._
 
-  def list: Stream[F, WithId[FloatingIP]] = genericList[WithId[FloatingIP]]("floatingips", uri)
+  def list: Stream[F, WithId[FloatingIP]] = list[WithId[FloatingIP]]("floatingips", uri)
 
   def get(region: String, floatingIpId: String): F[WithId[FloatingIP]] =
     client.expect(GET(uri / s"$region:$floatingIpId", authToken))

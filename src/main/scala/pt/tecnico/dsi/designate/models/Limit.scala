@@ -4,7 +4,7 @@ import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
 
 object Limit {
-  implicit val codec: Codec.AsObject[Limit] = deriveCodec[Limit](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Limit] = deriveCodec(renaming.snakeCase)
 }
 
 case class Limit(
@@ -15,6 +15,6 @@ case class Limit(
   maxZoneRecords: Integer,
   maxZoneRecordsets: Integer,
   maxZones: Integer,
-  minTtl: Integer,
+  minTtl: Option[Integer]
 )
 

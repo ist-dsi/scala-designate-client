@@ -18,7 +18,7 @@ final class ZoneTransferAccepts[F[_]: Sync](baseUri: Uri, authToken: Header)(imp
     client.expect(POST(body.asJson, uri, authToken))
   }
 
-  def list: Stream[F, WithId[ZoneTransferAccept]] = genericList[WithId[ZoneTransferAccept]]("transfer_accepts", uri)
+  def list: Stream[F, WithId[ZoneTransferAccept]] = list[WithId[ZoneTransferAccept]]("transfer_accepts", uri)
 
   def get(zoneTransferAcceptId: String): F[WithId[ZoneTransferAccept]] = client.expect(GET(uri / zoneTransferAcceptId, authToken))
 }
