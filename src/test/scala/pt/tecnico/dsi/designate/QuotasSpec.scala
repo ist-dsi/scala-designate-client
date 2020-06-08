@@ -8,17 +8,17 @@ class QuotasSpec extends Utils {
       for {
         client <- designateClient
         _ <- client.quotas.get
-      } yield assert(true)
+      } yield assert { true }
     }
 
     "reset quotas in project" in {
       for {
-        // We need a sample project
         keystone <- keystoneClient
+        // We need a sample project
         project <- keystone.projects.list().head.compile.lastOrError
         client <- designateClient
-        _ <- client.quotas.reset(project.id)
-      } yield assert(true)
+        isIdempotent <- client.quotas.reset(project.id).valueShouldIdempotentlyBe(())
+      } yield isIdempotent
     }
 
     "get project quotas" in {
@@ -26,8 +26,9 @@ class QuotasSpec extends Utils {
         keystone <- keystoneClient
         project <- keystone.projects.list().head.compile.lastOrError
         client <- designateClient
-        _ <- client.quotas.get(project.id)
-      } yield assert(true)
+        actual <- client.quotas.get(project.id)
+        isIdempotent <- client.quotas.get(project.id).valueShouldIdempotentlyBe(actual)
+      } yield isIdempotent
     }
 
     val dummyQuota = Quota(
@@ -38,13 +39,13 @@ class QuotasSpec extends Utils {
       zones = 15
     )
 
-    "update project quotas" in {
+    "set project quotas" in {
       for {
         keystone <- keystoneClient
         project <- keystone.projects.list().head.compile.lastOrError
         client <- designateClient
-        _ <- client.quotas.update(project.id, dummyQuota)
-      } yield assert(true)
+        isIdempotent <- client.quotas.update(project.id, dummyQuota).valueShouldIdempotentlyBe(dummyQuota)
+      } yield isIdempotent
     }
   }
 }

@@ -6,14 +6,14 @@ class DesignateClientSpec extends Utils {
       for {
         client <- designateClient
         _ <- client.limits
-      } yield assert(true)
+      } yield assert { true }
     }
 
     "show recordsets" in {
       for {
         client <- designateClient
         _ <- client.recordsets.compile.toList
-      } yield assert(true)
+      } yield assert { true }
     }
   }
 }
