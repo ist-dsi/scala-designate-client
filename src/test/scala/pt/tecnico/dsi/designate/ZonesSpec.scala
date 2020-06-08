@@ -1,7 +1,6 @@
 package pt.tecnico.dsi.designate
 
-import cats.effect.IO
-import pt.tecnico.dsi.designate.models.{Zone, ZoneCreate, ZoneUpdate}
+import pt.tecnico.dsi.designate.models.{ZoneCreate, ZoneUpdate}
 
 class ZonesSpec extends Utils {
   "The Zones service" should {
@@ -12,6 +11,7 @@ class ZonesSpec extends Utils {
     )
 
     val dummyZoneUpdate = ZoneUpdate(
+      email = Some("afonso@example.org"),
       ttl = Some(600),
       description = Some("new description")
     )
@@ -19,38 +19,51 @@ class ZonesSpec extends Utils {
     "list zones" in {
       for {
         client <- designateClient
-        _ <- client.zones.list().compile.toList
-      } yield assert(true)
+        expected <- client.zones.create(dummyZoneCreate)
+        isIdempotent <- client.zones.list().compile.toList.idempotently { lst =>
+          assert (lst.exists(_.id == expected.id))
+        }
+      } yield isIdempotent
     }
 
     "create zones" in {
       for {
         client <- designateClient
-        // TODO: Do we want `create` to fail sometimes?
-        //  (if it already exists and lots of non-updatable parameters are passed)
-        actual <- client.zones.create(dummyZoneCreate)
-      } yield assert {
-        // TODO: Find better way
-        actual.model.email == dummyZoneCreate.email &&
-        actual.model.name == dummyZoneCreate.name &&
-        actual.model.description == dummyZoneCreate.description
-      }
+        actual <- client.zones.create(dummyZoneCreate).idempotently { actual =>
+          assert {
+            actual.model.email == dummyZoneCreate.email &&
+            actual.model.name == dummyZoneCreate.name &&
+            actual.model.description == dummyZoneCreate.description
+          }
+        }
+      } yield actual
     }
 
     "update zone" in {
       for {
         client <- designateClient
         expected <- client.zones.create(dummyZoneCreate)
-        _ <- client.zones.update(expected.id, dummyZoneUpdate)
-      } yield assert(true)
+        isIdempotent <- client.zones.update(expected.id, dummyZoneUpdate).idempotently { actual =>
+          val equalEmail = dummyZoneUpdate.email.forall(_ == actual.model.email)
+          val equalDesc = {
+            for (expect <- dummyZoneUpdate.description; actual <- actual.model.description)
+              yield expect == actual
+          }.getOrElse(true)
+          val equalTtl = {
+            for (expect <- dummyZoneUpdate.ttl; actual <- actual.model.ttl)
+              yield expect == actual
+          }.getOrElse(true)
+          assert (equalEmail && equalDesc && equalTtl)
+        }
+      } yield isIdempotent
     }
 
     "get zone" in {
       for {
         client <- designateClient
         expected <- client.zones.create(dummyZoneCreate)
-        _ <- client.zones.get(expected.id)
-      } yield assert(true)
+        isIdempotent <- client.zones.get(expected.id).idempotently(_.model shouldEqual expected.model)
+      } yield isIdempotent
     }
 
     "list groups" in {
@@ -58,15 +71,15 @@ class ZonesSpec extends Utils {
         client <- designateClient
         expected <- client.zones.create(dummyZoneCreate)
         _ <- client.zones.listGroups(expected.id).compile.toList
-      } yield assert(true)
+      } yield assert { true }
     }
 
     "delete zone" in {
       for {
         client <- designateClient
         expected <- client.zones.create(dummyZoneCreate)
-        _ <- client.zones.delete(expected.id)
-      } yield assert(true)
+        isIdempotent <- client.zones.delete(expected.id).valueShouldIdempotentlyBe(())
+      } yield isIdempotent
     }
   }
 }
