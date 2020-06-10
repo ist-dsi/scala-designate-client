@@ -14,10 +14,21 @@ class QuotasSpec extends Utils {
     "reset quotas in project" in {
       for {
         keystone <- keystoneClient
+        client <- designateClient
         // We need a sample project
         project <- keystone.projects.list().head.compile.lastOrError
-        client <- designateClient
         isIdempotent <- client.quotas.reset(project.id).valueShouldIdempotentlyBe(())
+      } yield isIdempotent
+    }
+
+    "reset and check quotas in project" in {
+      for {
+        keystone <- keystoneClient
+        client <- designateClient
+        project <- keystone.projects.list().head.compile.lastOrError
+        _ <- client.quotas.reset(project.id)
+        quota <- client.quotas.get(project.id)
+        isIdempotent <- client.quotas.get(project.id).valueShouldIdempotentlyBe(quota)
       } yield isIdempotent
     }
 
