@@ -11,6 +11,28 @@ object Recordset {
   implicit val codec: Codec.AsObject[Recordset] = deriveCodec(renaming.snakeCase)
 }
 
+object RecordsetCreate {
+  implicit val codec: Codec.AsObject[RecordsetCreate] = deriveCodec(renaming.snakeCase)
+}
+
+object RecordsetUpdate {
+  implicit val codec: Codec.AsObject[RecordsetUpdate] = deriveCodec(renaming.snakeCase)
+}
+
+case class RecordsetUpdate(
+  ttl: Option[Integer],
+  description: Option[String],
+  records: Seq[String]
+)
+
+case class RecordsetCreate(
+  name: String,
+  ttl: Option[Integer],
+  description: Option[String],
+  `type`: String,
+  records: Seq[String]
+)
+
 case class Recordset(
   projectId: String,
   name: String,

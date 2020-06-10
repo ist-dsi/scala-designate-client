@@ -28,14 +28,14 @@ abstract class AsymmetricCRUDService[F[_]: Sync: Client, Model: Codec](baseUri: 
   protected def createHandleConflict(value: Create)(onConflict: Response[F] => F[WithId[Model]])
                                     (implicit codec: Codec[Create]): F[WithId[Model]] =
     client.fetch(POST(value, uri, authToken)) {
-      case Successful(response) => response.as[Map[String, WithId[Model]]].map(_.apply(name))
+      case Successful(response) => response.as[WithId[Model]]
       case Conflict(response) => onConflict(response)
       case response => F.raiseError(UnexpectedStatus(response.status))
     }
 
   def get(id: String): F[WithId[Model]] = get[Model](id)
 
-  def update(id: String, value: Update)(implicit d: Codec[Update]): F[WithId[Model]] = update[Model, Update](id, value)
+  def update(id: String, value: Update)(implicit d: Codec[Update]): F[WithId[Model]] = genericUpdate[Model, Update](id, value)
 
   def delete(value: WithId[Model]): F[Unit] = delete(value.id)
   def delete(id: String): F[Unit] = delete(uri / id)

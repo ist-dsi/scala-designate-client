@@ -24,7 +24,7 @@ abstract class BaseService[F[_]](protected val authToken: Header)
 
   protected def get[T: Codec](id: String): F[WithId[T]] = unwrap(GET(uri / id, authToken))
 
-  protected def update[T: Codec, R: Codec](id: String, value: R): F[WithId[T]] =
+  protected def genericUpdate[T: Codec, R: Codec](id: String, value: R): F[WithId[T]] =
     unwrap[T](PATCH(value, uri / id, authToken))
 
   protected def list[R: Decoder](baseKey: String, uri: Uri, query: Query = Query.empty): Stream[F, R] = {

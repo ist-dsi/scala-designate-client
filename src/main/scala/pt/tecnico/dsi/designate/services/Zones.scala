@@ -26,7 +26,7 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
     list(Query.fromPairs("name" -> name)).compile.lastOrError
   }
 
-  def recordsets(id: String): Recordsets[F] = new Recordsets(uri / id / "recordsets", authToken)
+  def recordsets(id: String): Recordsets[F] = new Recordsets(uri / id, authToken)
 
   override def createHandleConflict(value: Create)(onConflict: Response[F] => F[WithId[Zone]])(implicit codec: Codec[Create]): F[WithId[Zone]] =
     client.fetch(POST(value, uri, authToken)) {
