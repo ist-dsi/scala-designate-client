@@ -2,7 +2,7 @@ package pt.tecnico.dsi.designate.services
 
 import cats.effect.Sync
 import fs2.Stream
-import io.circe.Codec
+import io.circe.{Codec, Encoder}
 import cats.syntax.flatMap._
 import org.http4s.Status.{Conflict, Successful}
 import org.http4s.client.{Client, UnexpectedStatus}
@@ -28,14 +28,14 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
 
   def recordsets(id: String): Recordsets[F] = new Recordsets(uri / id, authToken)
 
-  override def createHandleConflict(value: Create)(onConflict: Response[F] => F[WithId[Zone]])(implicit codec: Codec[Create]): F[WithId[Zone]] =
+  override def createHandleConflict(value: Create)(onConflict: Response[F] => F[WithId[Zone]])(implicit codec: Encoder[Create]): F[WithId[Zone]] =
     client.fetch(POST(value, uri, authToken)) {
       case Successful(response) => response.as[WithId[Zone]]
       case Conflict(response) => onConflict(response)
       case response => F.raiseError(UnexpectedStatus(response.status))
     }
 
-  override def create(value: Create)(implicit codec: Codec[Create]): F[WithId[Zone]] = createHandleConflict(value) { _ =>
+  override def create(value: Create)(implicit codec: Encoder[Create]): F[WithId[Zone]] = createHandleConflict(value) { _ =>
     getByName(value.name)
       .flatMap(existing => update(existing.id, ZoneUpdate(
         email = Some(value.email),

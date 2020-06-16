@@ -31,9 +31,9 @@ class ZonesSpec extends Utils {
         client <- designateClient
         actual <- client.zones.create(dummyZoneCreate).idempotently { actual =>
           assert {
-            actual.model.email == dummyZoneCreate.email &&
-            actual.model.name == dummyZoneCreate.name &&
-            actual.model.description == dummyZoneCreate.description
+            actual.email == dummyZoneCreate.email &&
+            actual.name == dummyZoneCreate.name &&
+            actual.description == dummyZoneCreate.description
           }
         }
       } yield actual
@@ -45,14 +45,8 @@ class ZonesSpec extends Utils {
         expected <- client.zones.create(dummyZoneCreate)
         isIdempotent <- client.zones.update(expected.id, dummyZoneUpdate).idempotently { actual =>
           val equalEmail = dummyZoneUpdate.email.forall(_ == actual.model.email)
-          val equalDesc = {
-            for (expect <- dummyZoneUpdate.description; actual <- actual.model.description)
-              yield expect == actual
-          }.getOrElse(true)
-          val equalTtl = {
-            for (expect <- dummyZoneUpdate.ttl; actual <- actual.model.ttl)
-              yield expect == actual
-          }.getOrElse(true)
+          val equalDesc = dummyZoneUpdate.description == actual.model.description
+          val equalTtl = dummyZoneUpdate.ttl == actual.model.ttl
           assert (equalEmail && equalDesc && equalTtl)
         }
       } yield isIdempotent
@@ -62,8 +56,8 @@ class ZonesSpec extends Utils {
       for {
         client <- designateClient
         expected <- client.zones.create(dummyZoneCreate)
-        isIdempotent <- client.zones.get(expected.id).idempotently(_.model shouldEqual expected.model)
-      } yield isIdempotent
+        actual <- client.zones.get(expected.id)
+      } yield expected shouldEqual actual
     }
 
     "list groups" in {
