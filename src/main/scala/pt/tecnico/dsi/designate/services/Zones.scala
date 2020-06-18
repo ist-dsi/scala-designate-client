@@ -7,7 +7,7 @@ import cats.syntax.flatMap._
 import org.http4s.Status.{Conflict, Successful}
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.{Header, Query, Response, Status, Uri}
-import pt.tecnico.dsi.designate.models.{Nameserver, WithId, Zone, ZoneCreate, ZoneTransferRequest, ZoneTransferRequestCreate, ZoneUpdate}
+import pt.tecnico.dsi.designate.models.{Nameserver, WithId, Zone, ZoneCreate, ZoneTransferRequest, ZoneTransferRequestCreate, ZoneTransferRequestUpdate, ZoneUpdate}
 
 final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
   extends AsymmetricCRUDService[F, Zone](baseUri, "zone", authToken) {
@@ -47,15 +47,18 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
   object tasks {
     val uri: Uri = self.uri / "tasks"
 
-    def createTransferRequest(zoneId: String, value: ZoneTransferRequestCreate): F[WithId[ZoneTransferRequest]] =
+    def createTransferRequest(zoneId: String, value: ZoneTransferRequestCreate)(implicit c: Codec[ZoneTransferRequestUpdate], d: Codec[ZoneTransferRequestCreate]): F[WithId[ZoneTransferRequest]] =
       createTransferRequestHandleConflict(self.uri / zoneId / "tasks" / "transfer_requests", value) { _ =>
         transferRequests.list().filter(h => h.zoneId == zoneId)
           .head.compile.lastOrError
-          .flatMap(existing => transferRequests.update(existing.id, value))
+          .flatMap(existing => transferRequests.update(existing.id, ZoneTransferRequestUpdate(
+            description = Some(value.description),
+            targetProjectId = value.targetProjectId
+          )))
       }
 
     protected def createTransferRequestHandleConflict(uri: Uri, value: ZoneTransferRequestCreate)(onConflict: Response[F] => F[WithId[ZoneTransferRequest]])
-      : F[WithId[ZoneTransferRequest]] =
+      (implicit c: Codec[ZoneTransferRequestCreate]): F[WithId[ZoneTransferRequest]] =
       client.fetch(POST(value, uri, authToken)) {
         case Successful(response) => response.as[WithId[ZoneTransferRequest]]
         case Conflict(response) => onConflict(response)

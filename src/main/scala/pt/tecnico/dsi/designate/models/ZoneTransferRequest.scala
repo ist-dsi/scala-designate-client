@@ -6,12 +6,21 @@ import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
 
 object ZoneTransferRequest {
-  implicit val codec: Codec.AsObject[ZoneTransferRequest] = deriveCodec[ZoneTransferRequest](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[ZoneTransferRequest] = deriveCodec[ZoneTransferRequest](renaming.snakeCase)
 }
 
 object ZoneTransferRequestCreate {
-  implicit val codec: Codec.AsObject[ZoneTransferRequestCreate] = deriveCodec[ZoneTransferRequestCreate](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[ZoneTransferRequestCreate] = deriveCodec[ZoneTransferRequestCreate](renaming.snakeCase)
 }
+
+object ZoneTransferRequestUpdate {
+  implicit val codec: Codec.AsObject[ZoneTransferRequestUpdate] = deriveCodec[ZoneTransferRequestUpdate](renaming.snakeCase)
+}
+
+case class ZoneTransferRequestUpdate(
+  description: Option[String],
+  targetProjectId: Option[String]
+)
 
 case class ZoneTransferRequestCreate(
   description: String,

@@ -2,11 +2,11 @@ package pt.tecnico.dsi.designate.services
 
 import cats.effect.Sync
 import fs2.Stream
-import io.circe.{Codec, Decoder, Encoder}
+import io.circe.{Decoder, Codec, Encoder}
 import io.circe.syntax._
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
-import pt.tecnico.dsi.designate.models.{Status, WithId, ZoneTransferRequest, ZoneTransferRequestCreate}
+import pt.tecnico.dsi.designate.models.{Status, WithId, ZoneTransferRequest, ZoneTransferRequestCreate, ZoneTransferRequestUpdate}
 
 final class ZoneTransferRequests[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F])
   extends BaseService[F](authToken) {
@@ -14,7 +14,7 @@ final class ZoneTransferRequests[F[_]: Sync](baseUri: Uri, authToken: Header)(im
   // We cannot extend crud service directly because `create` does not belong to uri
   def crudService: AsymmetricCRUDService[F, ZoneTransferRequest] =
     new AsymmetricCRUDService[F, ZoneTransferRequest](baseUri, name = "transfer_request", authToken) {
-      override type Update = ZoneTransferRequestCreate
+      override type Update = ZoneTransferRequestUpdate
   }
 
   def get(id: String): F[WithId[ZoneTransferRequest]] = crudService.get(id)
