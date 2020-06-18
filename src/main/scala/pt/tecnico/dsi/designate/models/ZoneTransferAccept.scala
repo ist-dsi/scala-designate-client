@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.designate.models
 
-import java.time.OffsetDateTime
+import java.time.{LocalDateTime, OffsetDateTime}
+
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
 
@@ -9,11 +10,11 @@ object ZoneTransferAccept {
 }
 
 case class ZoneTransferAccept (
-  key: String,
+  key: Option[String],
   status: Status,
   projectId: String,
   zoneId: String,
-  createdAt: OffsetDateTime,
-  updatedAt: Option[OffsetDateTime],
+  createdAt: LocalDateTime,
+  updatedAt: Option[LocalDateTime],
   zoneTransferRequestId: String
 )
