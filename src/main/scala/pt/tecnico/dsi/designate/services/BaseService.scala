@@ -19,12 +19,11 @@ abstract class BaseService[F[_]](protected val authToken: Header)
   protected val dsl = new Http4sClientDsl[F] with Methods
   import dsl._
 
-  protected def unwrap[T: Codec](request: F[Request[F]]): F[WithId[T]] =
-    client.expect[WithId[T]](request)
+  protected def unwrap[T](request: F[Request[F]])(implicit c: Decoder[WithId[T]]): F[WithId[T]] = client.expect[WithId[T]](request)
 
-  protected def get[T: Codec](id: String): F[WithId[T]] = unwrap(GET(uri / id, authToken))
+  protected def get[T](id: String)(implicit c: Decoder[WithId[T]]): F[WithId[T]] = unwrap(GET(uri / id, authToken))
 
-  protected def update[T: Codec, R: Codec](id: String, value: R): F[WithId[T]] =
+  def update[T: Codec, R: Codec](id: String, value: R): F[WithId[T]] =
     unwrap[T](PATCH(value, uri / id, authToken))
 
   protected def list[R: Decoder](baseKey: String, uri: Uri, query: Query = Query.empty): Stream[F, R] = {
