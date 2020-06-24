@@ -11,7 +11,7 @@ class ZoneTransferAcceptsSpec extends Utils {
     )
 
     val dummyZoneTransferRequestCreate = ZoneTransferRequestCreate(
-      description = "This is a zone transfer request.",
+      description = Some("This is a zone transfer request."),
       targetProjectId = None
     )
 

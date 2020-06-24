@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.designate.models
 
-import java.time.{LocalDateTime, OffsetDateTime}
+import java.time.LocalDateTime
 
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
@@ -23,7 +23,7 @@ case class ZoneTransferRequestUpdate(
 )
 
 case class ZoneTransferRequestCreate(
-  description: String,
+  description: Option[String],
   targetProjectId: Option[String]
 )
 

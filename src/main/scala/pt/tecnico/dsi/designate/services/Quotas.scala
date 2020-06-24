@@ -19,6 +19,5 @@ class Quotas[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Clien
 
   def get: F[Quota] = client.expect(GET(uri, authToken))
 
-  def reset(projectId: String): F[Unit] =
-    client.expect(DELETE(uri / projectId, authToken))
+  def reset(projectId: String): F[Unit] = super.delete(uri / projectId)
 }

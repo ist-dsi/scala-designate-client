@@ -3,7 +3,7 @@ package pt.tecnico.dsi.designate.services
 import cats.effect.Sync
 import fs2.Stream
 import org.http4s.client.Client
-import org.http4s.{Header, Uri}
+import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.designate.models.{FloatingIP, WithId}
 
 class FloatingIPs[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F])
@@ -12,7 +12,7 @@ class FloatingIPs[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: 
   override val uri: Uri = baseUri / "reverse" / "floatingips"
   import dsl._
 
-  def list: Stream[F, WithId[FloatingIP]] = list[WithId[FloatingIP]]("floatingips", uri)
+  def list: Stream[F, WithId[FloatingIP]] = super.list[WithId[FloatingIP]]("floatingips", uri, Query.empty)
 
   def get(region: String, floatingIpId: String): F[WithId[FloatingIP]] =
     client.expect(GET(uri / s"$region:$floatingIpId", authToken))
@@ -21,7 +21,7 @@ class FloatingIPs[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: 
     client.expect(PATCH(floatingIp, uri / (region + ":" + floatingIpId), authToken))
 
   def unset(region: String, floatingIP: String): F[Unit] =
-    client.expect(PATCH(Map("ptrdname" -> None), uri / (region + ":" + floatingIP)))
+    expectUnwrapped(PATCH(Map("ptrdname" -> None), uri / (region + ":" + floatingIP)))
 
 }
 

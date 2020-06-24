@@ -6,7 +6,7 @@ import io.circe.{Codec, Encoder}
 import cats.syntax.flatMap._
 import org.http4s.Status.{Conflict, Successful}
 import org.http4s.client.{Client, UnexpectedStatus}
-import org.http4s.{Header, Query, Response, Status, Uri}
+import org.http4s.{Header, Query, Response, Uri}
 import pt.tecnico.dsi.designate.models.{Nameserver, WithId, Zone, ZoneCreate, ZoneTransferRequest, ZoneTransferRequestCreate, ZoneTransferRequestUpdate, ZoneUpdate}
 
 final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
@@ -19,7 +19,7 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
   override type Update = ZoneUpdate
 
   def listGroups(id: String): Stream[F, Nameserver] =
-    list[Nameserver]("nameservers", uri / id / "nameservers")
+    list[Nameserver]("nameservers", uri / id / "nameservers", Query.empty)
 
   def getByName(name: String): F[WithId[Zone]] = {
     // A domain name is globally unique across all domains.
@@ -47,22 +47,14 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
   object tasks {
     val uri: Uri = self.uri / "tasks"
 
-    def createTransferRequest(zoneId: String, value: ZoneTransferRequestCreate)(implicit c: Codec[ZoneTransferRequestUpdate], d: Codec[ZoneTransferRequestCreate]): F[WithId[ZoneTransferRequest]] =
-      createTransferRequestHandleConflict(self.uri / zoneId / "tasks" / "transfer_requests", value) { _ =>
+    def createTransferRequest(zoneId: String, value: ZoneTransferRequestCreate): F[WithId[ZoneTransferRequest]] =
+      self.createHandleConflict(self.uri / zoneId / "tasks" / "transfer_requests", value) { _ =>
         transferRequests.list().filter(h => h.zoneId == zoneId)
           .head.compile.lastOrError
           .flatMap(existing => transferRequests.update(existing.id, ZoneTransferRequestUpdate(
-            description = Some(value.description),
+            description = value.description,
             targetProjectId = value.targetProjectId
           )))
-      }
-
-    protected def createTransferRequestHandleConflict(uri: Uri, value: ZoneTransferRequestCreate)(onConflict: Response[F] => F[WithId[ZoneTransferRequest]])
-      (implicit c: Codec[ZoneTransferRequestCreate]): F[WithId[ZoneTransferRequest]] =
-      client.fetch(POST(value, uri, authToken)) {
-        case Successful(response) => response.as[WithId[ZoneTransferRequest]]
-        case Conflict(response) => onConflict(response)
-        case response => F.raiseError(UnexpectedStatus(response.status))
       }
 
     val transferRequests: ZoneTransferRequests[F] = new ZoneTransferRequests(uri, authToken)

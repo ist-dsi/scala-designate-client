@@ -2,16 +2,16 @@ package pt.tecnico.dsi.designate.services
 
 import cats.effect.Sync
 import fs2.Stream
-import io.circe.{Decoder, Codec, Encoder}
+import io.circe.Codec
 import io.circe.syntax._
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
-import pt.tecnico.dsi.designate.models.{Status, WithId, ZoneTransferRequest, ZoneTransferRequestCreate, ZoneTransferRequestUpdate}
+import pt.tecnico.dsi.designate.models.{Status, WithId, ZoneTransferRequest, ZoneTransferRequestUpdate}
 
 final class ZoneTransferRequests[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F])
   extends BaseService[F](authToken) {
 
-  // We cannot extend crud service directly because `create` does not belong to uri
+  // We cannot extend CRUDService directly because `create` does not belong to uri
   def crudService: AsymmetricCRUDService[F, ZoneTransferRequest] =
     new AsymmetricCRUDService[F, ZoneTransferRequest](baseUri, name = "transfer_request", authToken) {
       override type Update = ZoneTransferRequestUpdate
@@ -27,8 +27,9 @@ final class ZoneTransferRequests[F[_]: Sync](baseUri: Uri, authToken: Header)(im
   def list(status: Option[Status]): Stream[F, WithId[ZoneTransferRequest]] =
     crudService.list(Query.fromPairs("status" -> status.asJson.toString()))
 
-  def update(id: String, value: ZoneTransferRequestCreate)(implicit c: Codec[ZoneTransferRequestCreate]): F[WithId[ZoneTransferRequest]]
-    = crudService.update(id, value)
+  // TODO: Couldn't use `crudService.update` because it relies on private type `Update`
+  def update(id: String, value: ZoneTransferRequestUpdate)(implicit c: Codec[ZoneTransferRequestUpdate]): F[WithId[ZoneTransferRequest]]
+    = super.update(uri / id, value)
 
   override val uri: Uri = baseUri / "transfer_requests"
 }

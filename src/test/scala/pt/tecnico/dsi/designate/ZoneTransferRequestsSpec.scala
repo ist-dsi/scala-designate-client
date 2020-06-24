@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.designate
 
-import pt.tecnico.dsi.designate.models.{ZoneCreate, ZoneTransferRequestCreate}
+import pt.tecnico.dsi.designate.models.{ZoneCreate, ZoneTransferRequestCreate, ZoneTransferRequestUpdate}
 
 class ZoneTransferRequestsSpec extends Utils {
   "Zone Tranfer Requests Service" should {
@@ -11,12 +11,12 @@ class ZoneTransferRequestsSpec extends Utils {
     )
 
     val dummyZoneTransferRequestCreate = ZoneTransferRequestCreate(
-      description = "This is a zone transfer request.",
+      description = Some("This is a zone transfer request."),
       targetProjectId = None
     )
 
-    val dummyZoneTransferRequestUpdate = ZoneTransferRequestCreate(
-      description = "This is a zone transfer request after update.",
+    val dummyZoneTransferRequestUpdate = ZoneTransferRequestUpdate(
+      description = Some("This is a zone transfer request after update."),
       targetProjectId = None
     )
 
@@ -35,7 +35,7 @@ class ZoneTransferRequestsSpec extends Utils {
         before <- client.zones.tasks.createTransferRequest(zone.id, dummyZoneTransferRequestCreate)
         actual <- client.zones.tasks.transferRequests.update(before.id, dummyZoneTransferRequestUpdate)
       } yield assert {
-        actual.description == dummyZoneTransferRequestUpdate.description &&
+        actual.description == dummyZoneTransferRequestUpdate.description.get &&
         actual.targetProjectId == dummyZoneTransferRequestUpdate.targetProjectId
       }
     }
