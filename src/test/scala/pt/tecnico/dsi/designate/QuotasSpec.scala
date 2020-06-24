@@ -25,7 +25,7 @@ class QuotasSpec extends Utils {
       for {
         keystone <- keystoneClient
         client <- designateClient
-        project <- keystone.projects.list().head.compile.lastOrError
+        project <- keystone.projects.get("admin", keystone.session.user.domainId)
         _ <- client.quotas.reset(project.id)
         quota <- client.quotas.get(project.id)
         isIdempotent <- client.quotas.get(project.id).valueShouldIdempotentlyBe(quota)
@@ -35,7 +35,7 @@ class QuotasSpec extends Utils {
     "get project quotas" in {
       for {
         keystone <- keystoneClient
-        project <- keystone.projects.list().head.compile.lastOrError
+        project <- keystone.projects.get("admin", keystone.session.user.domainId)
         client <- designateClient
         actual <- client.quotas.get(project.id)
         isIdempotent <- client.quotas.get(project.id).valueShouldIdempotentlyBe(actual)
@@ -53,7 +53,7 @@ class QuotasSpec extends Utils {
     "set project quotas" in {
       for {
         keystone <- keystoneClient
-        project <- keystone.projects.list().head.compile.lastOrError
+        project <- keystone.projects.get("admin", keystone.session.user.domainId)
         client <- designateClient
         isIdempotent <- client.quotas.update(project.id, dummyQuota).valueShouldIdempotentlyBe(dummyQuota)
       } yield isIdempotent
