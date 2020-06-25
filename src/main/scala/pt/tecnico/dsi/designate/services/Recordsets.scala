@@ -5,7 +5,7 @@ import io.circe.{Codec, Encoder}
 import cats.syntax.flatMap._
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
-import pt.tecnico.dsi.designate.models.{Recordset, RecordsetCreate, RecordsetUpdate, WithId, Zone, ZoneUpdate}
+import pt.tecnico.dsi.designate.models.{Recordset, RecordsetCreate, RecordsetUpdate, WithId}
 
 final class Recordsets[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
   extends AsymmetricCRUDService[F, Recordset](baseUri, "recordset", authToken) {
@@ -17,8 +17,8 @@ final class Recordsets[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
   def getByName(name: String): F[WithId[Recordset]] =
     list(Query.fromPairs("name" -> name)).compile.lastOrError
 
-  override def update(id: String, value: RecordsetUpdate)(implicit d: Codec[RecordsetUpdate]): F[WithId[Recordset]] =
-    unwrap[Recordset](PUT(value, uri / id, authToken))
+  override def update(id: String, value: RecordsetUpdate)(implicit d: Encoder[RecordsetUpdate]): F[WithId[Recordset]] =
+    expectUnwrapped(PUT(value, uri / id))
 
   override def create(value: RecordsetCreate)(implicit codec: Encoder[RecordsetCreate]): F[WithId[Recordset]] = createHandleConflict(value) { _ =>
     getByName(value.name)
