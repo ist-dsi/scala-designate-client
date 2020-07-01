@@ -6,7 +6,6 @@ import io.circe.derivation.{deriveCodec, renaming}
 object Limit {
   implicit val codec: Codec.AsObject[Limit] = deriveCodec(renaming.snakeCase)
 }
-
 case class Limit(
   maxPageLimit: Integer,
   maxRecordsetNameLength: Integer,

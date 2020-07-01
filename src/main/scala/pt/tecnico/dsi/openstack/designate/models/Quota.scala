@@ -6,7 +6,6 @@ import io.circe.derivation.{deriveCodec, renaming}
 object Quota {
   implicit val codec: Codec.AsObject[Quota] = deriveCodec(renaming.snakeCase)
 }
-
 case class Quota(
   apiExportSize: Integer,
   recordsetRecords: Integer,

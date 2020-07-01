@@ -11,11 +11,9 @@ import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.{Header, Query, Response, Uri}
 import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.common.services.Service
-import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferRequest, ZoneTransferRequestCreate, ZoneTransferRequestUpdate}
+import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferRequest}
 
-final class ZoneTransferRequests[F[_]: Sync](baseUri: Uri, authToken: Header, createUri: String => Uri)(implicit client: Client[F])
-  extends Service[F](authToken) {
-
+final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, authToken: Header, createUri: String => Uri) extends Service[F](authToken) {
   import dsl._
   val uri: Uri = baseUri / "transfer_requests"
 
@@ -29,23 +27,22 @@ final class ZoneTransferRequests[F[_]: Sync](baseUri: Uri, authToken: Header, cr
   def list(status: Option[Status]): Stream[F, WithId[ZoneTransferRequest]] =
     list(Query.fromPairs("status" -> status.asJson.toString()))
 
-  def update(id: String, value: ZoneTransferRequestUpdate)(implicit c: Encoder[ZoneTransferRequestUpdate]): F[WithId[ZoneTransferRequest]]
-    = super.patch(value, uri / id, wrappedAt = None)
+  def update(id: String, value: ZoneTransferRequest.Update)(implicit c: Encoder[ZoneTransferRequest.Update]): F[WithId[ZoneTransferRequest]] =
+    super.patch(value, uri / id, wrappedAt = None)
 
-  private def createHandleConflict(uri: Uri, value: ZoneTransferRequestCreate)(onConflict: Response[F] => F[WithId[ZoneTransferRequest]]): F[WithId[ZoneTransferRequest]] =
+  private def createHandleConflict(uri: Uri, value: ZoneTransferRequest.Create)
+    (onConflict: Response[F] => F[WithId[ZoneTransferRequest]]): F[WithId[ZoneTransferRequest]] =
     POST(value, uri, authToken).flatMap(client.run(_).use {
       case Successful(response) => response.as[WithId[ZoneTransferRequest]]
       case Conflict(response) => onConflict(response)
       case response => F.raiseError(UnexpectedStatus(response.status))
     })
 
-  def create(zoneId: String, value: ZoneTransferRequestCreate): F[WithId[ZoneTransferRequest]] =
-      createHandleConflict(createUri(zoneId), value) { _ =>
-        list().filter(h => h.zoneId == zoneId)
-          .head.compile.lastOrError
-          .flatMap(existing => update(existing.id, ZoneTransferRequestUpdate(
-            description = value.description,
-            targetProjectId = value.targetProjectId
-          )))
+  def create(zoneId: String, value: ZoneTransferRequest.Create): F[WithId[ZoneTransferRequest]] =
+    createHandleConflict(createUri(zoneId) / "transfer_requests", value) { _ =>
+      list().filter(_.zoneId == zoneId).head.compile.lastOrError.flatMap { existing =>
+        val updated = ZoneTransferRequest.Update(value.description, value.targetProjectId)
+        update(existing.id, updated)
       }
+    }
 }

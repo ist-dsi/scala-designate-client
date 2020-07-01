@@ -8,7 +8,7 @@ case object Action extends Enum[Action] {
   implicit val circeEncoder: Encoder[Action] = Circe.encoderUppercase(this)
   implicit val circeDecoder: Decoder[Action] = Circe.decoderUppercaseOnly(this)
 
-  case object `None`  extends Action
+  case object None  extends Action
   case object Create  extends Action
   case object Delete  extends Action
   case object Update  extends Action

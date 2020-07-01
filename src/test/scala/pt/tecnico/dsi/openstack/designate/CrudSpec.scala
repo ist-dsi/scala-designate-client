@@ -4,7 +4,7 @@ import cats.effect.IO
 import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.common.services.CrudService
 
-abstract class CRUDSpec[M, C, U](val name: String, val service: DesignateClient[IO] => CrudService[IO, M, C, U]) extends Utils {
+abstract class CrudSpec[M, C, U](val name: String, val service: DesignateClient[IO] => CrudService[IO, M, C, U]) extends Utils {
   def stub: IO[C]
 
   val withSubCreated: IO[(WithId[M], CrudService[IO, M, C, U])] =

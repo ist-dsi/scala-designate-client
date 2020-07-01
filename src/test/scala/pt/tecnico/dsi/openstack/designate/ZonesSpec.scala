@@ -75,10 +75,10 @@ class ZonesSpec extends Utils {
 
     val dummyRecordsetCreate = Recordset.Create(
       name = "example.org.",
-      ttl = Some(3600),
       description = Some("This is an example record set."),
+      ttl = Some(3600),
+      `type` = "A",
       records = List("10.1.0.2"),
-      `type` = "A"
     )
 
     // TODO: Often get 400 error on this test.
@@ -133,6 +133,5 @@ class ZonesSpec extends Utils {
         isIdempotent <- client.zones.recordsets(zone.id).list().compile.toList.idempotently(_.isEmpty shouldBe false)
       } yield isIdempotent
     }
-
   }
 }

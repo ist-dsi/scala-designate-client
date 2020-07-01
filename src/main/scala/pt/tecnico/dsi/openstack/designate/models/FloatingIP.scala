@@ -6,7 +6,6 @@ import io.circe.derivation.{deriveCodec, renaming}
 object FloatingIP {
   implicit val codec: Codec.AsObject[FloatingIP] = deriveCodec(renaming.snakeCase)
 }
-
 case class FloatingIP (
   ptrdname: String,
   description: String,
