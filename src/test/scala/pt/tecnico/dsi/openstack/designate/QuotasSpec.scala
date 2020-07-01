@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.designate
 
-import pt.tecnico.dsi.designate.models.Quota
+import pt.tecnico.dsi.openstack.designate.models.Quota
 
 class QuotasSpec extends Utils {
   "The Quotas service" should {
@@ -17,7 +17,7 @@ class QuotasSpec extends Utils {
         client <- designateClient
         // We need a sample project
         project <- keystone.projects.list().head.compile.lastOrError
-        isIdempotent <- client.quotas.reset(project.id).valueShouldIdempotentlyBe(())
+        isIdempotent <- client.quotas.reset(project.id).idempotently(_ shouldBe ())
       } yield isIdempotent
     }
 
@@ -28,7 +28,7 @@ class QuotasSpec extends Utils {
         project <- keystone.projects.get("admin", keystone.session.user.domainId)
         _ <- client.quotas.reset(project.id)
         quota <- client.quotas.get(project.id)
-        isIdempotent <- client.quotas.get(project.id).valueShouldIdempotentlyBe(quota)
+        isIdempotent <- client.quotas.get(project.id).idempotently(_ shouldBe quota)
       } yield isIdempotent
     }
 
@@ -38,7 +38,7 @@ class QuotasSpec extends Utils {
         project <- keystone.projects.get("admin", keystone.session.user.domainId)
         client <- designateClient
         actual <- client.quotas.get(project.id)
-        isIdempotent <- client.quotas.get(project.id).valueShouldIdempotentlyBe(actual)
+        isIdempotent <- client.quotas.get(project.id).idempotently(_ shouldBe actual)
       } yield isIdempotent
     }
 
@@ -55,7 +55,7 @@ class QuotasSpec extends Utils {
         keystone <- keystoneClient
         project <- keystone.projects.get("admin", keystone.session.user.domainId)
         client <- designateClient
-        isIdempotent <- client.quotas.update(project.id, dummyQuota).valueShouldIdempotentlyBe(dummyQuota)
+        isIdempotent <- client.quotas.update(project.id, dummyQuota).idempotently(_ shouldBe dummyQuota)
       } yield isIdempotent
     }
   }

@@ -1,11 +1,11 @@
 package pt.tecnico.dsi.openstack.designate
 
-import pt.tecnico.dsi.designate.models.{ZoneCreate, ZoneTransferRequestCreate}
+import pt.tecnico.dsi.openstack.designate.models.{Zone, ZoneTransferRequestCreate}
 
 class ZoneTransferAcceptsSpec extends Utils {
   "Zone Transfer Accept service" should {
 
-    val dummyZoneCreate = ZoneCreate(
+    val dummyZoneCreate = Zone.Create(
       name = "example.org.",
       email = "joe@example.org"
     )
@@ -19,7 +19,7 @@ class ZoneTransferAcceptsSpec extends Utils {
       for {
         client <- designateClient
         zone <- client.zones.create(dummyZoneCreate)
-        req <- client.zones.tasks.createTransferRequest(zone.id, dummyZoneTransferRequestCreate)
+        req <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         acc <- client.zones.tasks.transferAccepts.create(req.key, req.id)
       } yield acc.zoneId shouldEqual zone.id
     }
@@ -28,7 +28,7 @@ class ZoneTransferAcceptsSpec extends Utils {
       for {
         client <- designateClient
         zone <- client.zones.create(dummyZoneCreate)
-        req <- client.zones.tasks.createTransferRequest(zone.id, dummyZoneTransferRequestCreate)
+        req <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         acc <- client.zones.tasks.transferAccepts.create(req.key, req.id)
         got <- client.zones.tasks.transferAccepts.list.filter(_.id == acc.id).head.compile.lastOrError
       } yield
@@ -45,7 +45,7 @@ class ZoneTransferAcceptsSpec extends Utils {
       for {
         client <- designateClient
         zone <- client.zones.create(dummyZoneCreate)
-        req <- client.zones.tasks.createTransferRequest(zone.id, dummyZoneTransferRequestCreate)
+        req <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         expected <- client.zones.tasks.transferAccepts.create(req.key, req.id)
         actual <- client.zones.tasks.transferAccepts.get(expected.id)
       } yield assert {

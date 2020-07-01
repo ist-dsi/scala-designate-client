@@ -44,18 +44,7 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
 
   object tasks {
     val uri: Uri = self.uri / "tasks"
-
-    def createTransferRequest(zoneId: String, value: ZoneTransferRequestCreate): F[WithId[ZoneTransferRequest]] =
-      self.createHandleConflict(self.uri / zoneId / "tasks" / "transfer_requests", value) { _ =>
-        transferRequests.list().filter(h => h.zoneId == zoneId)
-          .head.compile.lastOrError
-          .flatMap(existing => transferRequests.update(existing.id, ZoneTransferRequestUpdate(
-            description = value.description,
-            targetProjectId = value.targetProjectId
-          )))
-      }
-
-    val transferRequests: ZoneTransferRequests[F] = new ZoneTransferRequests(uri, authToken)
+    val transferRequests: ZoneTransferRequests[F] = new ZoneTransferRequests(uri, authToken, self.uri / _ / "tasks")
     val transferAccepts: ZoneTransferAccepts[F] = new ZoneTransferAccepts(uri, authToken)
   }
 
