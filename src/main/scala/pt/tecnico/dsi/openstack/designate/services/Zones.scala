@@ -12,17 +12,17 @@ import pt.tecnico.dsi.openstack.designate.models._
 final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
   extends CrudService[F, Zone, Zone.Create, Zone.Update](baseUri, "zone", authToken, wrapped = false) { self =>
 
-  def listGroups(id: String): Stream[F, Nameserver] =
-    list[Nameserver]("nameservers", uri / id / "nameservers", Query.empty)
+  def listGroups(id: String, extraHeaders: Header*): Stream[F, Nameserver] =
+    list[Nameserver]("nameservers", uri / id / "nameservers", Query.empty, extraHeaders:_*)
 
-  def getByName(name: String): F[WithId[Zone]] = {
+  def getByName(name: String, extraHeaders: Header*): F[WithId[Zone]] = {
     // A domain name is globally unique across all domains.
-    list(Query.fromPairs("name" -> name)).compile.lastOrError
+    list(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError
   }
 
   def recordsets(id: String): Recordsets[F] = new Recordsets(uri / id, authToken)
 
-  override def create(value: Zone.Create): F[WithId[Zone]] = createHandleConflict(value) {
+  override def create(value: Zone.Create, extraHeaders: Header*): F[WithId[Zone]] = createHandleConflict(value) {
     getByName(value.name).flatMap { existing =>
       val updated = Zone.Update(Some(value.email), value.ttl, value.description)
       update(existing.id, updated)

@@ -13,7 +13,7 @@ class ZoneTransferAcceptsSpec extends Utils {
 
     "create zone transfer accept" in {
       for {
-        client <- designateClient
+        client <- client
         zone <- client.zones.create(dummyZoneCreate)
         req <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         acc <- client.zones.tasks.transferAccepts.create(req.key, req.id)
@@ -22,11 +22,11 @@ class ZoneTransferAcceptsSpec extends Utils {
 
     "list zone transfer accepts" in {
       for {
-        client <- designateClient
+        client <- client
         zone <- client.zones.create(dummyZoneCreate)
         req <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         acc <- client.zones.tasks.transferAccepts.create(req.key, req.id)
-        got <- client.zones.tasks.transferAccepts.list.filter(_.id == acc.id).head.compile.lastOrError
+        got <- client.zones.tasks.transferAccepts.list().filter(_.id == acc.id).head.compile.lastOrError
       } yield {
           got.id shouldBe acc.id
           /* For some reason `key` is None on `list` but not on `create`
@@ -39,7 +39,7 @@ class ZoneTransferAcceptsSpec extends Utils {
 
     "get zone transfer accept" in {
       for {
-        client <- designateClient
+        client <- client
         zone <- client.zones.create(dummyZoneCreate)
         req <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         expected <- client.zones.tasks.transferAccepts.create(req.key, req.id)

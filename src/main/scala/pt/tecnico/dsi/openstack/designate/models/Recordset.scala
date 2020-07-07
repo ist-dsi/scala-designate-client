@@ -15,24 +15,26 @@ object Recordset {
   }
   case class Create(
     name: String,
-    ttl: Option[Integer],
-    description: Option[String],
     `type`: String,
-    records: List[String]
+    records: List[String],
+    ttl: Option[Integer] = None,
+    description: Option[String] = None,
   )
 
   object Update {
     implicit val codec: Codec.AsObject[Update] = deriveCodec(renaming.snakeCase)
   }
   case class Update(
-    ttl: Option[Integer],
-    description: Option[String],
-    records: List[String]
+    records: List[String],
+    ttl: Option[Integer] = None,
+    description: Option[String] = None,
   )
 }
 case class Recordset(
-  projectId: String,
   name: String,
+  `type`: String,
+  records: List[String],
+  projectId: String,
   ttl: Option[Integer],
   status: Status,
   action: Action,
@@ -42,8 +44,6 @@ case class Recordset(
   version: Integer,
   createdAt: LocalDateTime,
   updatedAt: Option[LocalDateTime],
-  `type`: String,
-  records: List[String]
 ) {
   def zone[F[_]: Sync](implicit d: DesignateClient[F]): F[WithId[Zone]] = d.zones.get(zoneId)
 }

@@ -38,7 +38,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
 
   val keystoneClient: IO[KeystoneClient[IO]] = KeystoneClient.fromEnvironment()
 
-  val designateClient: IO[DesignateClient[IO]] = for {
+  val client: IO[DesignateClient[IO]] = for {
     keystone <- keystoneClient
     session = keystone.session
     designateUrlOpt = session.catalog.collectFirst { case entry @ CatalogEntry("dns", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public) }.flatten
@@ -93,10 +93,10 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
 
     // If the first run fails we do not want to mask its exception, because failing in the first attempt means
     // whatever is being tested in `test` is not implemented correctly.
-    designateClient.flatMap(test).unsafeToFuture().flatMap { _ =>
+    client.flatMap(test).unsafeToFuture().flatMap { _ =>
       // For the subsequent iterations we mask TestFailed with "Operation is not idempotent"
       Future.traverse(2 to repetitions) { repetition =>
-        designateClient.flatMap(test).unsafeToFuture().transform(identity, {
+        client.flatMap(test).unsafeToFuture().transform(identity, {
           case e: TestFailedException =>
             val text = s"$repetition${ordinalSuffix(repetition)}"
             e.modifyMessage(_.map(m => s"Operation is not idempotent. On $text repetition got:\n$m"))

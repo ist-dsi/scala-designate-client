@@ -10,7 +10,7 @@ class ZoneTransferRequestsSpec extends Utils {
 
     "create zone transfer request" in {
       for {
-        client <- designateClient
+        client <- client
         zone <- client.zones.create(dummyZoneCreate)
         req <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
       } yield req.zoneId shouldBe zone.id
@@ -18,7 +18,7 @@ class ZoneTransferRequestsSpec extends Utils {
 
     "update zone transfer request" in {
       for {
-        client <- designateClient
+        client <- client
         zone <- client.zones.create(dummyZoneCreate)
         before <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         actual <- client.zones.tasks.transferRequests.update(before.id, dummyZoneTransferRequestUpdate)
@@ -30,7 +30,7 @@ class ZoneTransferRequestsSpec extends Utils {
 
     "get zone transfer request" in {
       for {
-        client <- designateClient
+        client <- client
         zone <- client.zones.create(dummyZoneCreate)
         expected <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         actual <- client.zones.tasks.transferRequests.get(expected.id)
@@ -39,7 +39,7 @@ class ZoneTransferRequestsSpec extends Utils {
 
     "delete zone transfer request" in {
       for {
-        client <- designateClient
+        client <- client
         zone <- client.zones.create(dummyZoneCreate)
         expected <- client.zones.tasks.transferRequests.create(zone.id, dummyZoneTransferRequestCreate)
         _ <- client.zones.tasks.transferRequests.delete(expected.id)

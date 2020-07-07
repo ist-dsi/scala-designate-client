@@ -1,8 +1,18 @@
 package pt.tecnico.dsi.openstack.designate
 
-import pt.tecnico.dsi.openstack.designate.models.{Recordset, Zone}
+import cats.effect.IO
+import pt.tecnico.dsi.openstack.designate.models.Zone
 
-class ZonesSpec extends Utils {
+class ZonesSpec extends CrudSpec[Zone, Zone.Create, Zone.Update]("zone", _.zones) {
+  override def stub: IO[Zone.Create] = IO.pure(Zone.Create("example.org.", "joe@example.org"))
+
+  /*
+  val withStubZone: IO[(DesignateClient[IO], String)] =
+    for {
+      designate <- client
+      dummyZone <- designate.zones.create(Zone.Create("example.org.", "joe@example.org"))
+    } yield (designate, dummyZone.id)
+
   "The Zones service" should {
 
     val dummyZoneCreate = Zone.Create(
@@ -18,7 +28,7 @@ class ZonesSpec extends Utils {
 
     "list zones" in {
       for {
-        client <- designateClient
+        client <- client
         expected <- client.zones.create(dummyZoneCreate)
         isIdempotent <- client.zones.list().compile.toList.idempotently { list =>
           list.exists(_.id == expected.id) shouldBe true
@@ -28,7 +38,7 @@ class ZonesSpec extends Utils {
 
     "create zones" in {
       for {
-        client <- designateClient
+        client <- client
         actual <- client.zones.create(dummyZoneCreate).idempotently { actual =>
           actual.email shouldBe dummyZoneCreate.email
           actual.name shouldBe dummyZoneCreate.name
@@ -39,7 +49,7 @@ class ZonesSpec extends Utils {
 
     "update zone" in {
       for {
-        client <- designateClient
+        client <- client
         expected <- client.zones.create(dummyZoneCreate)
         isIdempotent <- client.zones.update(expected.id, dummyZoneUpdate).idempotently { actual =>
           dummyZoneUpdate.email.forall(_ == actual.model.email) shouldBe true
@@ -51,7 +61,7 @@ class ZonesSpec extends Utils {
 
     "get zone" in {
       for {
-        client <- designateClient
+        client <- client
         expected <- client.zones.create(dummyZoneCreate)
         actual <- client.zones.get(expected.id)
       } yield expected shouldBe actual
@@ -59,7 +69,7 @@ class ZonesSpec extends Utils {
 
     "list groups" in {
       for {
-        client <- designateClient
+        client <- client
         expected <- client.zones.create(dummyZoneCreate)
         _ <- client.zones.listGroups(expected.id).compile.toList
       } yield assert { true }
@@ -67,71 +77,12 @@ class ZonesSpec extends Utils {
 
     "delete zone" in {
       for {
-        client <- designateClient
+        client <- client
         expected <- client.zones.create(dummyZoneCreate)
         isIdempotent <- client.zones.delete(expected.id).idempotently(_ shouldBe ())
       } yield isIdempotent
     }
-
-    val dummyRecordsetCreate = Recordset.Create(
-      name = "example.org.",
-      description = Some("This is an example record set."),
-      ttl = Some(3600),
-      `type` = "A",
-      records = List("10.1.0.2"),
-    )
-
-    // TODO: Often get 400 error on this test.
-    "create recordsets" in {
-      for {
-        client <- designateClient
-        zone <- client.zones.create(dummyZoneCreate)
-        recordset <- client.zones.recordsets(zone.id).create(dummyRecordsetCreate)
-      } yield {
-        recordset.model.`type` shouldBe dummyRecordsetCreate.`type`
-        recordset.model.zoneId shouldBe zone.id
-        recordset.model.description shouldBe dummyRecordsetCreate.description
-        recordset.model.records shouldBe dummyRecordsetCreate.records
-        recordset.model.ttl shouldBe dummyRecordsetCreate.ttl
-        recordset.model.name shouldBe dummyRecordsetCreate.name
-      }
-    }
-
-    val dummyRecordsetUpdate = Recordset.Update(
-      ttl = Some(3601),
-      description = Some("cool desc"),
-      records = List("10.1.1.1")
-    )
-
-    "update recordsets" in {
-      for {
-        client <- designateClient
-        zone <- client.zones.create(dummyZoneCreate)
-        recordset <- client.zones.recordsets(zone.id).create(dummyRecordsetCreate)
-        updated <- client.zones.recordsets(zone.id).update(recordset.id, dummyRecordsetUpdate)
-      } yield {
-        updated.ttl shouldBe dummyRecordsetUpdate.ttl
-        updated.description shouldBe dummyRecordsetUpdate.description
-        updated.records shouldBe dummyRecordsetUpdate.records
-      }
-    }
-
-    "delete recordsets" in {
-      for {
-        client <- designateClient
-        zone <- client.zones.create(dummyZoneCreate)
-        recordset <- client.zones.recordsets(zone.id).create(dummyRecordsetCreate)
-        isIdempotent <- client.zones.recordsets(zone.id).delete(recordset.id).idempotently(_ shouldBe ())
-      } yield isIdempotent
-    }
-
-    "list recordsets" in {
-      for {
-        client <- designateClient
-        zone <- client.zones.create(dummyZoneCreate)
-        _ <- client.zones.recordsets(zone.id).create(dummyRecordsetCreate)
-        isIdempotent <- client.zones.recordsets(zone.id).list().compile.toList.idempotently(_.isEmpty shouldBe false)
-      } yield isIdempotent
-    }
   }
+  */
+
 }

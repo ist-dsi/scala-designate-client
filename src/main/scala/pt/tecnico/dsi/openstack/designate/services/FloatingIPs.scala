@@ -11,15 +11,16 @@ import pt.tecnico.dsi.openstack.designate.models.FloatingIP
 class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends Service[F](authToken) {
   val uri: Uri = baseUri / "reverse" / "floatingips"
 
-  def list: Stream[F, WithId[FloatingIP]] = super.list[WithId[FloatingIP]]("floatingips", uri, Query.empty)
+  def list(extraHeaders: Header*): Stream[F, WithId[FloatingIP]] =
+    super.list[WithId[FloatingIP]]("floatingips", uri, Query.empty, extraHeaders:_*)
 
-  def get(region: String, floatingIpId: String): F[WithId[FloatingIP]] =
-    super.get(uri / s"$region:$floatingIpId", wrappedAt = None)
+  def get(region: String, floatingIpId: String, extraHeaders: Header*): F[WithId[FloatingIP]] =
+    super.get(wrappedAt = None, uri / s"$region:$floatingIpId", extraHeaders:_*)
 
-  def set(region: String, floatingIpId: String, floatingIp: FloatingIP): F[WithId[FloatingIP]] =
-    super.patch(floatingIp, uri / s"$region:$floatingIpId", wrappedAt = None)
+  def set(region: String, floatingIpId: String, floatingIp: FloatingIP, extraHeaders: Header*): F[WithId[FloatingIP]] =
+    super.patch(wrappedAt = None, floatingIp, uri / s"$region:$floatingIpId", extraHeaders:_*)
 
-  def unset(region: String, floatingIP: String): F[Unit] =
-    super.patch(Map("ptrdname" -> None), uri / s"$region:$floatingIP", wrappedAt = None)
+  def unset(region: String, floatingIP: String, extraHeaders: Header*): F[Unit] =
+    super.patch(wrappedAt = None, Map("ptrdname" -> None), uri / s"$region:$floatingIP", extraHeaders:_*)
 }
 
