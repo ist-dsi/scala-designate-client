@@ -29,11 +29,9 @@ case class ZoneTransferRequest (
   status: Status,
   projectId: String,
   zoneId: String,
-  description: String,
   zoneName: String,
+  description: Option[String] = None,
   createdAt: LocalDateTime,
   updatedAt: Option[LocalDateTime],
   targetProjectId: Option[String],
-  // Official API says `version` should appear, but does not :/
-  // version: Integer,
 )

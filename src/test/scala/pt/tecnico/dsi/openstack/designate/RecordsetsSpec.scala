@@ -10,10 +10,10 @@ class RecordsetsSpec extends Utils {
   val withStubRecord: IO[(Recordsets[IO], String, Recordset.Create, WithId[Recordset])] =
     for {
       designate <- client
-      dummyZone <- designate.zones.create(Zone.Create("example.org.", "joe@example.org"))
+      dummyZone <- designate.zones.create(Zone.Create("recordsets.org.", "john.doe@recordsets.org"))
       recordsets = designate.zones.recordsets(dummyZone.id)
       recordsetCreate = Recordset.Create(
-        name = s"sudomain${Random.nextInt()}.example.org.",
+        name = s"sudomain${Random.nextInt()}.recordsets.org.",
         description = Some("This is an example record set."),
         ttl = Some(3600),
         `type` = "A",

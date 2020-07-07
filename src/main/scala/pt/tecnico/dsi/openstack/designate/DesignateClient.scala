@@ -12,7 +12,7 @@ import pt.tecnico.dsi.openstack.designate.models.{Limit, Recordset}
 import pt.tecnico.dsi.openstack.designate.services.{FloatingIPs, Quotas, Recordsets, Zones}
 
 class DesignateClient[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F]) {
-  val uri: Uri = baseUri / "v2"
+  val uri: Uri = if (baseUri.path.endsWith("v2") || baseUri.path.endsWith("v2/")) baseUri else baseUri / "v2"
 
   val zones = new Zones[F](uri, authToken)
   val quotas = new Quotas[F](uri, authToken)

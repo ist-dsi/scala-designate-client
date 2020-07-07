@@ -32,9 +32,9 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
 
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
 
-  import org.http4s.client.middleware.Logger
-  implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
-  //implicit val httpClient: Client[IO] = _httpClient
+  //import org.http4s.client.middleware.Logger
+  //implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
+  implicit val httpClient: Client[IO] = _httpClient
 
   val keystoneClient: IO[KeystoneClient[IO]] = KeystoneClient.fromEnvironment()
 

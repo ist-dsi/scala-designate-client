@@ -19,7 +19,7 @@ final class Recordsets[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
 
   override def create(value: Recordset.Create, extraHeaders: Header*): F[WithId[Recordset]] = createHandleConflict(value, extraHeaders:_*) {
     getByName(value.name, extraHeaders:_*).flatMap { existing =>
-      val updated = Recordset.Update(value.ttl, value.description, value.records)
+      val updated = Recordset.Update(value.records, value.ttl, value.description)
       update(existing.id, updated, extraHeaders:_*)
     }
   }

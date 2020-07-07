@@ -1,88 +1,61 @@
 package pt.tecnico.dsi.openstack.designate
 
 import cats.effect.IO
+import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.designate.models.Zone
+import pt.tecnico.dsi.openstack.designate.services.Zones
 
-class ZonesSpec extends CrudSpec[Zone, Zone.Create, Zone.Update]("zone", _.zones) {
-  override def stub: IO[Zone.Create] = IO.pure(Zone.Create("example.org.", "joe@example.org"))
+class ZonesSpec extends Utils {
+  val dummyZoneCreate: Zone.Create = Zone.Create("zones.org.", "john.doe@zones.org")
 
-  /*
-  val withStubZone: IO[(DesignateClient[IO], String)] =
+  val withStubZone: IO[(Zones[IO], WithId[Zone])] =
     for {
       designate <- client
-      dummyZone <- designate.zones.create(Zone.Create("example.org.", "joe@example.org"))
-    } yield (designate, dummyZone.id)
+      zones = designate.zones
+      dummyZone <- zones.create(dummyZoneCreate)
+    } yield (zones, dummyZone)
 
   "The Zones service" should {
-
-    val dummyZoneCreate = Zone.Create(
-      name = "example.org.",
-      email = "joe@example.org"
-    )
-
-    val dummyZoneUpdate = Zone.Update(
-      email = Some("afonso@example.org"),
-      ttl = Some(600),
-      description = Some("new description")
-    )
-
-    "list zones" in {
-      for {
-        client <- client
-        expected <- client.zones.create(dummyZoneCreate)
-        isIdempotent <- client.zones.list().compile.toList.idempotently { list =>
-          list.exists(_.id == expected.id) shouldBe true
-        }
-      } yield isIdempotent
+    "list zones" in withStubZone.flatMap { case (zones, dummyZone) =>
+      zones.list().compile.toList.idempotently(_ should contain (dummyZone))
     }
 
     "create zones" in {
       for {
-        client <- client
-        actual <- client.zones.create(dummyZoneCreate).idempotently { actual =>
+        designate <- client
+        result <- designate.zones.create(dummyZoneCreate).idempotently { actual =>
           actual.email shouldBe dummyZoneCreate.email
           actual.name shouldBe dummyZoneCreate.name
           actual.description shouldBe dummyZoneCreate.description
         }
-      } yield actual
+      } yield result
     }
 
-    "update zone" in {
-      for {
-        client <- client
-        expected <- client.zones.create(dummyZoneCreate)
-        isIdempotent <- client.zones.update(expected.id, dummyZoneUpdate).idempotently { actual =>
-          dummyZoneUpdate.email.forall(_ == actual.model.email) shouldBe true
-          dummyZoneUpdate.description shouldBe actual.model.description
-          dummyZoneUpdate.ttl shouldBe actual.model.ttl
-        }
-      } yield isIdempotent
+    "get zone" in withStubZone.flatMap { case (zones, dummyZone) =>
+      zones.get(dummyZone.id).idempotently(_ shouldBe dummyZone)
     }
 
-    "get zone" in {
-      for {
-        client <- client
-        expected <- client.zones.create(dummyZoneCreate)
-        actual <- client.zones.get(expected.id)
-      } yield expected shouldBe actual
+    "update zone" in withStubZone.flatMap { case (zones, dummyZone) =>
+      val dummyZoneUpdate = Zone.Update(
+        email = Some("afonso@example.org"),
+        ttl = Some(600),
+        description = Some("new description")
+      )
+      zones.update(dummyZone.id, dummyZoneUpdate).idempotently { actual =>
+        dummyZoneUpdate.email.forall(_ == actual.model.email) shouldBe true
+        dummyZoneUpdate.description shouldBe actual.model.description
+        dummyZoneUpdate.ttl shouldBe actual.model.ttl
+      }
     }
 
-    "list groups" in {
-      for {
-        client <- client
-        expected <- client.zones.create(dummyZoneCreate)
-        _ <- client.zones.listGroups(expected.id).compile.toList
-      } yield assert { true }
+    "delete zone" in withStubZone.flatMap { case (zones, dummyZone) =>
+      zones.delete(dummyZone.id).idempotently(_ shouldBe ())
     }
 
-    "delete zone" in {
-      for {
-        client <- client
-        expected <- client.zones.create(dummyZoneCreate)
-        isIdempotent <- client.zones.delete(expected.id).idempotently(_ shouldBe ())
-      } yield isIdempotent
+    "list nameservers" in withStubZone.flatMap { case (zones, dummyZone) =>
+      zones.nameservers(dummyZone.id).compile.toList.idempotently { nameservers =>
+        nameservers.length should be >= 1
+      }
     }
   }
-  */
-
 }
