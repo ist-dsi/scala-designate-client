@@ -1,12 +1,10 @@
 package pt.tecnico.dsi.openstack.designate.services
 
 import cats.effect.Sync
-import io.circe.Encoder
 import cats.syntax.flatMap._
 import fs2.Stream
-import org.http4s.Method.POST
-import org.http4s.Status.{Conflict, Successful}
-import org.http4s.client.{Client, UnexpectedStatus}
+import io.circe.Encoder
+import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.common.services.Service
@@ -15,7 +13,6 @@ import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferRequest}
 // This class does not extend CrudService because `create` receives an extra zoneId parameter.
 
 final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, authToken: Header, createUri: String => Uri) extends Service[F](authToken) {
-  import dsl._
   val uri: Uri = baseUri / "transfer_requests"
 
   def list(status: Status, extraHeaders: Header*): Stream[F, WithId[ZoneTransferRequest]] =
@@ -27,15 +24,12 @@ final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, authToken: He
     super.list[WithId[ZoneTransferRequest]]("transfer_requests", uri, query, extraHeaders:_*)
 
   def create(zoneId: String, value: ZoneTransferRequest.Create, extraHeaders: Header*): F[WithId[ZoneTransferRequest]] =
-    POST.apply(value, createUri(zoneId) / "transfer_requests", (authToken +: extraHeaders):_*).flatMap(client.run(_).use {
-      case Successful(response) => response.as[WithId[ZoneTransferRequest]]
-      case Conflict(_) =>
-        list(Query.empty, extraHeaders:_*).filter(_.zoneId == zoneId).head.compile.lastOrError.flatMap { existing =>
-          val updated = ZoneTransferRequest.Update(value.description, value.targetProjectId)
-          update(existing.id, updated, extraHeaders:_*)
-        }
-      case response => F.raiseError(UnexpectedStatus(response.status))
-    })
+    super.postHandleConflict(wrappedAt = None, value, createUri(zoneId) / "transfer_requests", extraHeaders:_*) {
+      list(Query.empty, extraHeaders:_*).filter(_.zoneId == zoneId).head.compile.lastOrError.flatMap { existing =>
+        val updated = ZoneTransferRequest.Update(value.description, value.targetProjectId)
+        update(existing.id, updated, extraHeaders:_*)
+      }
+    }
 
   def get(id: String, extraHeaders: Header*): F[WithId[ZoneTransferRequest]] =
     super.get(wrappedAt = None, uri / id, extraHeaders:_*)
