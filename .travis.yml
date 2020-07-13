@@ -20,7 +20,7 @@ cache:
     - $HOME/.sbt
 
 before_script:
-  - source openrc-nova.sh
+  - source openrc-designate.sh
 
 script:
   - sbt -Dsbt.color=true compile
