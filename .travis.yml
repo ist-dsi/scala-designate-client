@@ -10,7 +10,6 @@ dist: bionic
 
 jdk:
   - openjdk11
-  - openjdk14
 
 env:
   - COURSIER_TTL="1h"
@@ -28,6 +27,6 @@ cache:
 
 before_script: source openrc-designate.sh
 
-script: sbt -Dsbt.color=true test
+script: sbt -Dsbt.color=true clean coverage test
 
 after_success: sbt -Dsbt.color=true coverageReport codacyCoverage

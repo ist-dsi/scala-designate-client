@@ -80,7 +80,7 @@ Test / testGrouping := {
 //      F - show full stack traces
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
 
-coverageEnabled := true
+// coverageEnabled := true
 
 // ======================================================================================================================
 // ==== Scaladoc ========================================================================================================
@@ -135,7 +135,7 @@ developers ++= List(
 )
 
 // Fail the build/release if updates there are updates for the dependencies
-//dependencyUpdatesFailBuild := true
+dependencyUpdatesFailBuild := true
 
 releaseUseGlobalVersion := false
 releaseNextCommitMessage := s"Setting version to ${ReleasePlugin.runtimeVersion.value} [skip ci]"
@@ -146,8 +146,6 @@ releaseProcess := Seq[ReleaseStep](
   releaseStepTask(dependencyUpdates),
   checkSnapshotDependencies,
   inquireVersions,
-  // Ensure we do not release artifacts with coverage instrumentation
-  releaseStepCommand("coverageOff"),
   runClean,
   releaseStepTask(Compile / doc),
   releaseStepTask(Test / test),
