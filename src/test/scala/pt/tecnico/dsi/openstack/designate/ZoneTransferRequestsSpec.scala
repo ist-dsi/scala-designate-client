@@ -1,53 +1,59 @@
 package pt.tecnico.dsi.openstack.designate
 
-import cats.effect.IO
+import cats.effect.{IO, Resource}
+import cats.syntax.traverse._
+import cats.instances.list._
+import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.common.models.WithId
-import pt.tecnico.dsi.openstack.designate.models.{Zone, ZoneTransferRequest}
-import pt.tecnico.dsi.openstack.designate.services.ZoneTransferRequests
+import pt.tecnico.dsi.openstack.designate.models.ZoneTransferRequest
 
 class ZoneTransferRequestsSpec extends Utils {
-  val dummyZoneCreate: Zone.Create = Zone.Create("requests.org.", "john.doe@requests.org")
-  val withStubZoneRequest: IO[(ZoneTransferRequests[IO], WithId[ZoneTransferRequest])] =
-    for {
-      keystone <- keystoneClient
-      adminProject <- keystone.projects.get("admin", keystone.session.user.domainId)
-      designate <- client
-      transferRequests = designate.zones.tasks.transferRequests
-      dummyZone <- designate.zones.create(dummyZoneCreate)
-      // We need to set targetProjectId otherwise `list` will return an empty list
-      requestCreate = ZoneTransferRequest.Create(targetProjectId = Some(adminProject.id))
-      dummyTransferRequest <- transferRequests.create(dummyZone.id, requestCreate)
-    } yield (transferRequests, dummyTransferRequest)
+  import designate.zones.tasks.transferRequests
 
-  "Zone Tranfer Requests Service" should {
-    "list zones" in withStubZoneRequest.flatMap { case (transferRequests, request) =>
+  val withStubZoneRequest: Resource[IO, WithId[ZoneTransferRequest]] = withStubZone.flatMap { zone =>
+    val create = keystone.projects.get("admin", keystone.session.user.domainId).flatMap { adminProject =>
+      // We need to set targetProjectId otherwise `list` will return an empty list
+      transferRequests.create(zone.id, ZoneTransferRequest.Create(targetProjectId = Some(adminProject.id)))
+    }
+    Resource.make(create)(request => transferRequests.delete(request.id))
+  }
+
+  // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion its being applied inside of `Resource.use`
+  // instead of outside of `use`. We are explicit on the types params for `use` so Intellij doesn't show us an error.
+
+  "Zone Transfer Requests Service" should {
+    "list zones" in withStubZoneRequest.use[IO, Assertion] { request =>
       transferRequests.list().compile.toList.idempotently(_ should contain (request))
     }
 
-    "create zone transfer request" in {
+    "create zone transfer request" in withStubZone.use[IO, Assertion] { zone =>
       for {
-        designate <- client
-        zones = designate.zones
-        dummyZone <- zones.create(dummyZoneCreate)
-        result <- zones.tasks.transferRequests.create(dummyZone.id, ZoneTransferRequest.Create()).idempotently { request =>
-          request.zoneId shouldBe dummyZone.id
-          request.zoneName shouldBe dummyZone.name
+        result <- transferRequests.create(zone.id, ZoneTransferRequest.Create()).idempotently { request =>
+          request.zoneId shouldBe zone.id
+          request.zoneName shouldBe zone.name
           request.key.nonEmpty shouldBe true
         }
+        requests <- transferRequests.list().compile.toList
+        _ <- requests.traverse(request => transferRequests.delete(request.id))
       } yield result
     }
 
-    "get zone transfer request" in withStubZoneRequest.flatMap { case (transferRequests, request) =>
+    "get zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>
       transferRequests.get(request.id).idempotently(_ shouldBe request)
     }
 
-    "update zone transfer request" in withStubZoneRequest.flatMap { case (transferRequests, request) =>
+    "update zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>
       val update = ZoneTransferRequest.Update(Some("a newer and updated nicer description"))
-      val updatedRequest = request.copy(model = request.model.copy(description = update.description))
-      transferRequests.update(request.id, update).idempotently(_ shouldBe updatedRequest)
+      transferRequests.update(request.id, update).idempotently { updated =>
+        val updatedRequest = request.copy(model = request.model.copy(
+          description = update.description,
+          updatedAt = updated.updatedAt
+        ))
+        updated shouldBe updatedRequest
+      }
     }
 
-    "delete zone transfer request" in withStubZoneRequest.flatMap { case (transferRequests, request) =>
+    "delete zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>
       transferRequests.delete(request.id).idempotently(_ shouldBe ())
     }
   }

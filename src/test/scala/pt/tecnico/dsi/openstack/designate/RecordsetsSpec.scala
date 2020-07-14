@@ -1,32 +1,46 @@
 package pt.tecnico.dsi.openstack.designate
 
-import scala.util.Random
-import cats.effect.IO
+import cats.effect.{IO, Resource}
+import org.scalatest.{Assertion, BeforeAndAfterAll}
 import pt.tecnico.dsi.openstack.common.models.WithId
-import pt.tecnico.dsi.openstack.designate.models.{Recordset, Zone}
+import pt.tecnico.dsi.openstack.designate.models.Recordset
 import pt.tecnico.dsi.openstack.designate.services.Recordsets
 
-class RecordsetsSpec extends Utils {
-  val withStubRecord: IO[(Recordsets[IO], String, Recordset.Create, WithId[Recordset])] =
-    for {
-      designate <- client
-      dummyZone <- designate.zones.create(Zone.Create("recordsets.org.", "john.doe@recordsets.org"))
-      recordsets = designate.zones.recordsets(dummyZone.id)
-      recordsetCreate = Recordset.Create(
-        name = s"sudomain${Random.nextInt()}.recordsets.org.",
+class RecordsetsSpec extends Utils with BeforeAndAfterAll {
+  // This way we use the same zone for every test, and make the logs smaller and easier to debug.
+  val (zone, deleteZone) = withStubZone.allocated.unsafeRunSync()
+  override protected def afterAll(): Unit = deleteZone.unsafeRunSync()
+
+  val recordsets: Recordsets[IO] = designate.zones.recordsets(zone.id)
+
+  val withStubRecord: Resource[IO, WithId[Recordset]] = {
+    val create = withRandomName { name =>
+      recordsets.create(Recordset.Create(
+        name = s"$name.${zone.name}",
+        description = Some("This is an example record set."),
+        ttl = Some(3600),
+        `type` = "A",
+        records = List("10.1.0.2"),
+      ))
+    }
+    Resource.make(create)(record => recordsets.delete(record.id))
+  }
+
+  // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion its being applied inside of `Resource.use`
+  // instead of outside of `use`. We are explicit on the types params for `use` so Intellij doesn't show us an error.
+
+  "Recordsets service" should {
+    "create recordsets" in {
+      val recordsetCreate = Recordset.Create(
+        name = s"${randomName()}.${zone.name}",
         description = Some("This is an example record set."),
         ttl = Some(3600),
         `type` = "A",
         records = List("10.1.0.2"),
       )
-      recordset <- recordsets.create(recordsetCreate)
-    } yield (recordsets, dummyZone.id, recordsetCreate, recordset)
-
-  "Recordsets service" should {
-    "create recordsets" in withStubRecord.flatMap { case (recordsets, dummyZoneId, recordsetCreate, _) =>
       recordsets.create(recordsetCreate).idempotently { recordset =>
         recordset.model.`type` shouldBe recordsetCreate.`type`
-        recordset.model.zoneId shouldBe dummyZoneId
+        recordset.model.zoneId shouldBe zone.id
         recordset.model.description shouldBe recordsetCreate.description
         recordset.model.records shouldBe recordsetCreate.records
         recordset.model.ttl shouldBe recordsetCreate.ttl
@@ -34,7 +48,7 @@ class RecordsetsSpec extends Utils {
       }
     }
 
-    "update recordsets" in withStubRecord.flatMap { case (recordsets, _, _, recordset) =>
+    "update recordsets" in withStubRecord.use[IO, Assertion] { recordset =>
       val recordsetUpdate = Recordset.Update(
         ttl = Some(3601),
         description = Some("cool desc"),
@@ -47,25 +61,20 @@ class RecordsetsSpec extends Utils {
       }
     }
 
-    "delete recordsets" in withStubRecord.flatMap { case (recordsets, _, _, recordset) =>
+    "delete recordsets" in withStubRecord.use[IO, Assertion] { recordset =>
       recordsets.delete(recordset.id).idempotently(_ shouldBe ())
     }
 
-    "list recordsets" in withStubRecord.flatMap { case (recordsets, _, _, recordset) =>
+    "list recordsets" in withStubRecord.use[IO, Assertion] { recordset =>
       recordsets.list().compile.toList.idempotently { list =>
-        list should contain oneElementOf(Seq(recordset))
+        list should contain (recordset)
       }
     }
   }
 
   "Designate client" should {
     "list recordsets" in {
-      for {
-        client <- client
-        recordsets <- client.recordsets.compile.toList
-      } yield {
-        recordsets should not be empty
-      }
+      designate.recordsets.compile.toList.map(_ should not be empty)
     }
   }
 }

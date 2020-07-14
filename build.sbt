@@ -25,15 +25,11 @@ scalacOptions ++= Seq(
   "-Wdead-code",                   // Warn when dead code is identified.
   "-Wextra-implicit",              // Warn when more than one implicit parameter section is defined.
   "-Wnumeric-widen",               // Warn when numerics are widened.
-  //"-Woctal-literal",               // Warn on obsolete octal syntax.
+  "-Woctal-literal",               // Warn on obsolete octal syntax.
   "-Wvalue-discard",               // Warn when non-Unit expression results are unused.
   "-Wunused:_",                    // Enables every warning of unused members/definitions/etc
-  // https://github.com/scala/bug/issues/11980
-  //"-Wconf:cat=unused-privates&site=pt\\.tecnico\\.dsi\\.keystone\\.models\\.auth\\..*:silent"
 )
 
-// These lines ensure that in sbt console or sbt test:console the -Ywarn* and the -Xfatal-warning are not bothersome.
-// https://stackoverflow.com/questions/26940253/in-sbt-how-do-you-override-scalacoptions-for-console-in-all-configurations
 scalacOptions in (Compile, console) ~= (_.filterNot { option =>
   option.startsWith("-W") || option.startsWith("-Xlint")
 })
@@ -43,10 +39,10 @@ scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module"      % "0.21.6"
+  "org.http4s"      %% s"http4s-$module"       % "0.21.6"
 } ++ Seq(
   "io.circe"        %% "circe-derivation"      % "0.13.0-M4",
-  "io.circe"        %% "circe-parser"         % "0.13.0",
+  "io.circe"        %% "circe-parser"          % "0.13.0",
   "com.beachape"    %% "enumeratum-circe"      % "1.6.1",
   "pt.tecnico.dsi"  %% "scala-openstack-common-clients" % "0.1.0-SNAPSHOT",
   "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.1.0-SNAPSHOT" % Test,
@@ -60,27 +56,28 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 // ======================================================================================================================
 // ==== Testing =========================================================================================================
 // ======================================================================================================================
-// By default, logging is buffered for each test source file until all tests for that file complete. This disables it.
+// http://www.scalatest.org/user_guide/using_the_runner
+//   -o[configs...] - causes test results to be written to the standard output.
+//      D - show all durations
+//      F - show full stack traces
+Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
+
+// By default logging is buffered for each test source file until all tests for that file complete.
+// This disables it, causing SBT testing logs to actually show they are running in parallel.
 Test / logBuffered := false
 // By default, tests executed in a forked JVM are executed sequentially.
 Test / fork := true
 // So we make them run in parallel.
 Test / testForkedParallel := true
+// We need to force IPv6 addresses otherwise Java resolves names to IPv4 and Travis will fail because the VM test is not reachable by IPv4
+Test / javaOptions += "-Djava.net.preferIPv6Addresses=true"
 // The tests in a single group are run sequentially. We run 4 suites per forked VM.
 Test / testGrouping := {
   import sbt.Tests.{Group, SubProcess}
   (Test / definedTests).value.grouped(4).zipWithIndex.map { case (tests, index) =>
-    Group(index.toString, tests, SubProcess(ForkOptions()))
+    Group(index.toString, tests, SubProcess(ForkOptions().withRunJVMOptions((Test / javaOptions).value.toVector)))
   }.toSeq
 }
-
-// http://www.scalatest.org/user_guide/using_the_runner
-//   -o[configs...] - causes test results to be written to the standard output.
-//      D - show all durations
-//      F - show full stack traces
-testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
-
-// coverageEnabled := true
 
 // ======================================================================================================================
 // ==== Scaladoc ========================================================================================================

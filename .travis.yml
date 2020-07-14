@@ -27,9 +27,7 @@ cache:
 
 before_script:
   - source openrc-designate.sh
-  - ping -6 -c 10 centos-sentmwlu.example-service-dev.al.vps.tecnico.ulisboa.pt
-  - |
-    printf "GET /v3/ HTTP/1.1\r\nHost: z\r\n\r\n" | nc 2001:690:2139:2f:f816:3eff:fe6f:dc83 5000
+  - ping -6 -c5 $(echo $OS_AUTH_URL | cut -d'/' -f3 | cut -d':' -f1)
 
 script: sbt -Dsbt.color=true clean coverage test
 
