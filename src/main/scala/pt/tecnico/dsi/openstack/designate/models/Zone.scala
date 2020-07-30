@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 import enumeratum.{Circe, Enum, EnumEntry}
 import io.circe.derivation.{deriveCodec, renaming}
 import io.circe.{Codec, Decoder, Encoder}
+import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 
 object Zone {
   sealed trait Type extends EnumEntry
@@ -41,8 +42,8 @@ object Zone {
     description: Option[String] = None
   )
 }
-
 case class Zone(
+  id: String,
   name: String,
   email: String,
   status: Status,
@@ -60,4 +61,5 @@ case class Zone(
   `type`: Zone.Type = Zone.Type.Primary,
   masters: List[String] = List.empty,
   attributes: Map[String, String] = Map.empty,
-)
+  links: List[Link] = List.empty,
+) extends Identifiable

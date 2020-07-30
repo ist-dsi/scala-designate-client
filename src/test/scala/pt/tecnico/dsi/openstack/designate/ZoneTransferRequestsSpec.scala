@@ -1,16 +1,17 @@
 package pt.tecnico.dsi.openstack.designate
 
+import java.util.UUID
 import cats.effect.{IO, Resource}
-import cats.syntax.traverse._
 import cats.instances.list._
+import cats.syntax.traverse._
+import org.http4s.client.UnexpectedStatus
 import org.scalatest.Assertion
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.designate.models.ZoneTransferRequest
 
 class ZoneTransferRequestsSpec extends Utils {
   import designate.zones.tasks.transferRequests
 
-  val withStubZoneRequest: Resource[IO, WithId[ZoneTransferRequest]] = withStubZone.flatMap { zone =>
+  val withStubZoneRequest: Resource[IO, ZoneTransferRequest] = withStubZone.flatMap { zone =>
     val create = keystone.projects.get("admin", keystone.session.user.domainId).flatMap { adminProject =>
       // We need to set targetProjectId otherwise `list` will return an empty list
       transferRequests.create(zone.id, ZoneTransferRequest.Create(targetProjectId = Some(adminProject.id)))
@@ -38,23 +39,33 @@ class ZoneTransferRequestsSpec extends Utils {
       } yield result
     }
 
-    "get zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>
-      transferRequests.get(request.id).idempotently(_ shouldBe request)
+    "get zone transfer request (existing id)" in withStubZoneRequest.use[IO, Assertion] { request =>
+      transferRequests.get(request.id).idempotently(_.value shouldBe request)
+    }
+    "get zone transfer request (non-existing id)" in {
+      transferRequests.get(UUID.randomUUID().toString).idempotently(_ shouldBe None)
+    }
+
+    "apply zone transfer request (existing id)" in withStubZoneRequest.use[IO, Assertion] { request =>
+      transferRequests.apply(request.id).idempotently(_ shouldBe request)
+    }
+    "apply zone transfer request (non-existing id)" in {
+      transferRequests.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [UnexpectedStatus])
     }
 
     "update zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>
       val update = ZoneTransferRequest.Update(Some("a newer and updated nicer description"))
       transferRequests.update(request.id, update).idempotently { updated =>
-        val updatedRequest = request.copy(model = request.model.copy(
+        val updatedRequest = request.copy(
           description = update.description,
           updatedAt = updated.updatedAt
-        ))
+        )
         updated shouldBe updatedRequest
       }
     }
 
     "delete zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>
-      transferRequests.delete(request.id).idempotently(_ shouldBe ())
+      transferRequests.delete(request).idempotently(_ shouldBe ())
     }
   }
 }

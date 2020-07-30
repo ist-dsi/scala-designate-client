@@ -4,15 +4,18 @@ import cats.effect.Sync
 import fs2.Stream
 import io.circe.Decoder
 import org.http4s.Method.GET
+import org.http4s.Uri.Path
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.{EntityDecoder, Header, Uri, circe}
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.designate.models.{Limit, Recordset}
 import pt.tecnico.dsi.openstack.designate.services.{FloatingIPs, Quotas, Recordsets, Zones}
 
 class DesignateClient[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F]) {
-  val uri: Uri = if (baseUri.path.endsWith("v2") || baseUri.path.endsWith("v2/")) baseUri else baseUri / "v2"
+  val uri: Uri = {
+    val lastSegment = baseUri.path.dropEndsWithSlash.segments.lastOption
+    if (lastSegment.contains(Path.Segment("v2"))) baseUri else baseUri / "v2"
+  }
 
   val zones = new Zones[F](uri, authToken)
   val quotas = new Quotas[F](uri, authToken)
@@ -25,5 +28,5 @@ class DesignateClient[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit clie
     client.expect(GET(uri / "limits", authToken))
   }
 
-  def recordsets: Stream[F, WithId[Recordset]] = new Recordsets[F](uri, authToken).list()
+  def recordsets: Stream[F, Recordset] = new Recordsets[F](uri, authToken).list()
 }

@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import cats.effect.Sync
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
-import pt.tecnico.dsi.openstack.common.models.WithId
+import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.designate.DesignateClient
 
 object Recordset {
@@ -31,6 +31,7 @@ object Recordset {
   )
 }
 case class Recordset(
+  id: String,
   name: String,
   `type`: String,
   records: List[String],
@@ -44,7 +45,8 @@ case class Recordset(
   version: Integer,
   createdAt: LocalDateTime,
   updatedAt: Option[LocalDateTime],
-) {
-  def zone[F[_]: Sync](implicit d: DesignateClient[F]): F[WithId[Zone]] = d.zones.get(zoneId)
+  links: List[Link] = List.empty,
+) extends Identifiable {
+  def zone[F[_]: Sync](implicit d: DesignateClient[F]): F[Zone] = d.zones.apply(zoneId)
 }
 
