@@ -2,7 +2,6 @@ package pt.tecnico.dsi.openstack.designate
 
 import cats.effect.{IO, Resource}
 import org.scalatest.{Assertion, BeforeAndAfterAll}
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.designate.models.Recordset
 import pt.tecnico.dsi.openstack.designate.services.Recordsets
 
@@ -13,7 +12,7 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
 
   val recordsets: Recordsets[IO] = designate.zones.recordsets(zone.id)
 
-  val withStubRecord: Resource[IO, WithId[Recordset]] = {
+  val withStubRecord: Resource[IO, Recordset] = {
     val create = withRandomName { name =>
       recordsets.create(Recordset.Create(
         name = s"$name.${zone.name}",
@@ -26,7 +25,7 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
     Resource.make(create)(record => recordsets.delete(record.id))
   }
 
-  // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion its being applied inside of `Resource.use`
+  // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion is being applied inside of `Resource.use`
   // instead of outside of `use`. We are explicit on the types params for `use` so Intellij doesn't show us an error.
 
   "Recordsets service" should {
@@ -39,12 +38,12 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
         records = List("10.1.0.2"),
       )
       recordsets.create(recordsetCreate).idempotently { recordset =>
-        recordset.model.`type` shouldBe recordsetCreate.`type`
-        recordset.model.zoneId shouldBe zone.id
-        recordset.model.description shouldBe recordsetCreate.description
-        recordset.model.records shouldBe recordsetCreate.records
-        recordset.model.ttl shouldBe recordsetCreate.ttl
-        recordset.model.name shouldBe recordsetCreate.name
+        recordset.`type` shouldBe recordsetCreate.`type`
+        recordset.zoneId shouldBe zone.id
+        recordset.description shouldBe recordsetCreate.description
+        recordset.records shouldBe recordsetCreate.records
+        recordset.ttl shouldBe recordsetCreate.ttl
+        recordset.name shouldBe recordsetCreate.name
       }
     }
 

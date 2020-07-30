@@ -1,9 +1,9 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
-
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
+import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 
 object ZoneTransferRequest {
   implicit val codec: Codec.AsObject[ZoneTransferRequest] = deriveCodec(renaming.snakeCase)
@@ -24,7 +24,8 @@ object ZoneTransferRequest {
     targetProjectId: Option[String] = None,
   )
 }
-case class ZoneTransferRequest (
+case class ZoneTransferRequest(
+  id: String,
   key: String,
   status: Status,
   projectId: String,
@@ -34,4 +35,5 @@ case class ZoneTransferRequest (
   createdAt: LocalDateTime,
   updatedAt: Option[LocalDateTime],
   targetProjectId: Option[String],
-)
+  links: List[Link] = List.empty,
+) extends Identifiable

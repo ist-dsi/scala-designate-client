@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.openstack.designate
 
+import java.util.UUID
 import cats.effect.IO
+import org.http4s.client.UnexpectedStatus
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.Zone
 
@@ -28,8 +30,18 @@ class ZonesSpec extends Utils {
       } yield result
     }
 
-    "get zone" in withStubZone.use[IO, Assertion] { dummyZone =>
-      zones.get(dummyZone.id).idempotently(_ shouldBe dummyZone)
+    "get zone (existing id)" in withStubZone.use[IO, Assertion] { dummyZone =>
+      zones.get(dummyZone.id).idempotently(_.value shouldBe dummyZone)
+    }
+    "get zone (non-existing id)" in {
+      zones.get(UUID.randomUUID().toString).idempotently(_ shouldBe None)
+    }
+
+    "apply zone (existing id)" in withStubZone.use[IO, Assertion] { dummyZone =>
+      zones.apply(dummyZone.id).idempotently(_ shouldBe dummyZone)
+    }
+    "apply zone (non-existing id)" in {
+      zones.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [UnexpectedStatus])
     }
 
     "update zone" in withStubZone.use[IO, Assertion] { dummyZone =>
@@ -39,14 +51,14 @@ class ZonesSpec extends Utils {
         description = Some("new description")
       )
       zones.update(dummyZone.id, dummyZoneUpdate).idempotently { actual =>
-        dummyZoneUpdate.email.forall(_ == actual.model.email) shouldBe true
-        dummyZoneUpdate.description shouldBe actual.model.description
-        dummyZoneUpdate.ttl shouldBe actual.model.ttl
+        dummyZoneUpdate.email.forall(_ == actual.email) shouldBe true
+        dummyZoneUpdate.description shouldBe actual.description
+        dummyZoneUpdate.ttl shouldBe actual.ttl
       }
     }
 
     "delete zone" in withStubZone.use[IO, Assertion] { dummyZone =>
-      zones.delete(dummyZone.id).idempotently(_ shouldBe ())
+      zones.delete(dummyZone).idempotently(_ shouldBe ())
     }
 
     "list nameservers" in withStubZone.use[IO, Assertion] { dummyZone =>

@@ -15,12 +15,11 @@ import org.scalatest._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.designate.models.Zone
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.{CatalogEntry, Interface, Project}
 
-abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
+abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll with OptionValues with EitherValues {
   val logger: Logger = getLogger
 
   implicit override def executionContext = ExecutionContext.global
@@ -53,17 +52,17 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   def randomName(): String = random.alphanumeric.take(10).mkString.dropWhile(_.isDigit).toLowerCase
   def withRandomName[T](f: String => IO[T]): IO[T] = IO.delay(randomName()).flatMap(f)
 
-  val withStubProject: Resource[IO, WithId[Project]] = {
-    val create = withRandomName(name => keystone.projects.create(Project(name, "dummy project", "default")))
-    Resource.make(create)(project => keystone.projects.delete(project))
+  val withStubProject: Resource[IO, Project] = {
+    val create = withRandomName(name => keystone.projects.create(Project.Create(name)))
+    Resource.make(create)(project => keystone.projects.delete(project.id))
   }
 
-  val withStubZone: Resource[IO, WithId[Zone]] = {
+  val withStubZone: Resource[IO, Zone] = {
     val create = withRandomName { name =>
       val domain = s"$name.org"
       designate.zones.create(Zone.Create(s"$domain.", s"joe@$domain"))
     }
-    Resource.make(create)(zone => designate.zones.delete(zone))
+    Resource.make(create)(zone => designate.zones.delete(zone.id))
   }
 
   implicit class RichIO[T](io: IO[T]) {
