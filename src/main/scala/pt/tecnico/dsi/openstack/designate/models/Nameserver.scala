@@ -8,5 +8,5 @@ object Nameserver {
 }
 case class Nameserver (
   hostname: String,
-  priority: Integer
+  priority: Int
 )

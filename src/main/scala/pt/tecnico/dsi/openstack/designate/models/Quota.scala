@@ -7,9 +7,9 @@ object Quota {
   implicit val codec: Codec.AsObject[Quota] = deriveCodec(renaming.snakeCase)
 }
 case class Quota(
-  apiExportSize: Integer,
-  recordsetRecords: Integer,
-  zoneRecords: Integer,
-  zoneRecordsets: Integer,
-  zones: Integer
+  apiExportSize: Int,
+  recordsetRecords: Int,
+  zoneRecords: Int,
+  zoneRecordsets: Int,
+  zones: Int
 )

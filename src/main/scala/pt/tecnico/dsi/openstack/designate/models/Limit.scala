@@ -7,13 +7,13 @@ object Limit {
   implicit val codec: Codec.AsObject[Limit] = deriveCodec(renaming.snakeCase)
 }
 case class Limit(
-  maxPageLimit: Integer,
-  maxRecordsetNameLength: Integer,
-  maxRecordsetRecords: Integer,
-  maxZoneNameLength: Integer,
-  maxZoneRecords: Integer,
-  maxZoneRecordsets: Integer,
-  maxZones: Integer,
-  minTtl: Option[Integer]
+  maxPageLimit: Int,
+  maxRecordsetNameLength: Int,
+  maxRecordsetRecords: Int,
+  maxZoneNameLength: Int,
+  maxZoneRecords: Int,
+  maxZoneRecordsets: Int,
+  maxZones: Int,
+  minTtl: Option[Int]
 )
 

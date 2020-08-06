@@ -26,7 +26,7 @@ object Zone {
   case class Create(
     name: String,
     email: String,
-    ttl: Option[Integer] = None,
+    ttl: Option[Int] = None,
     description: Option[String] = None,
     masters: List[String] = List.empty,
     `type`: Zone.Type = Zone.Type.Primary,
@@ -38,7 +38,7 @@ object Zone {
   }
   case class Update(
     email: Option[String] = None,
-    ttl: Option[Integer] = None,
+    ttl: Option[Int] = None,
     description: Option[String] = None
   )
 }
@@ -49,14 +49,14 @@ case class Zone(
   status: Status,
   action: Action,
   // TODO: "Version of this resource", failing test: WithId(model: Zone(version: 57 -> 58))
-  version: Integer,
+  version: Int,
   createdAt: LocalDateTime,
-  serial: Integer,
+  serial: Int,
   poolId: String,
   projectId: String,
   transferredAt: Option[LocalDateTime] = None,
   updatedAt: Option[LocalDateTime] = None,
-  ttl: Option[Integer] = None,
+  ttl: Option[Int] = None,
   description: Option[String] = None,
   `type`: Zone.Type = Zone.Type.Primary,
   masters: List[String] = List.empty,

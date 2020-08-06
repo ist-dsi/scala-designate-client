@@ -13,14 +13,14 @@ object FloatingIP {
   case class Create (
     ptrdname: String,
     description: String,
-    ttl: Integer,
+    ttl: Int,
   )
 }
 case class FloatingIP(
   id: String,
   ptrdname: String,
   description: String,
-  ttl: Integer,
+  ttl: Int,
   address: String,
   status: Status,
   action: Action,

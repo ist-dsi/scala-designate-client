@@ -17,7 +17,7 @@ object Recordset {
     name: String,
     `type`: String,
     records: List[String],
-    ttl: Option[Integer] = None,
+    ttl: Option[Int] = None,
     description: Option[String] = None,
   )
 
@@ -26,7 +26,7 @@ object Recordset {
   }
   case class Update(
     records: List[String],
-    ttl: Option[Integer] = None,
+    ttl: Option[Int] = None,
     description: Option[String] = None,
   )
 }
@@ -36,13 +36,13 @@ case class Recordset(
   `type`: String,
   records: List[String],
   projectId: String,
-  ttl: Option[Integer],
+  ttl: Option[Int],
   status: Status,
   action: Action,
   zoneId: String,
   zoneName: String,
   description: Option[String],
-  version: Integer,
+  version: Int,
   createdAt: LocalDateTime,
   updatedAt: Option[LocalDateTime],
   links: List[Link] = List.empty,
