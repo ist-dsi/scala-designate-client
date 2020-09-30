@@ -6,9 +6,10 @@ import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.common.services.CrudService
 import pt.tecnico.dsi.openstack.designate.models.Recordset
+import pt.tecnico.dsi.openstack.keystone.models.Session
 
-final class Recordsets[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
-  extends CrudService[F, Recordset, Recordset.Create, Recordset.Update](baseUri, "recordset", authToken, wrapped = false) {
+final class Recordsets[F[_]: Sync: Client](baseUri: Uri, session: Session)
+  extends CrudService[F, Recordset, Recordset.Create, Recordset.Update](baseUri, "recordset", session.authToken, wrapped = false) {
 
   def getByName(name: String, extraHeaders: Header*): F[Recordset] =
     list(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError

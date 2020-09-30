@@ -7,8 +7,9 @@ import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.designate.models.FloatingIP
+import pt.tecnico.dsi.openstack.keystone.models.Session
 
-class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends Service[F](authToken) {
+class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](session.authToken) {
   val uri: Uri = baseUri / "reverse" / "floatingips"
 
   def list(extraHeaders: Header*): Stream[F, FloatingIP] =

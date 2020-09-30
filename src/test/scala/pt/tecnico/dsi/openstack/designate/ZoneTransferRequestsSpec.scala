@@ -12,7 +12,7 @@ class ZoneTransferRequestsSpec extends Utils {
   import designate.zones.tasks.transferRequests
 
   val withStubZoneRequest: Resource[IO, ZoneTransferRequest] = withStubZone.flatMap { zone =>
-    val create = keystone.projects.get("admin", keystone.session.user.domainId).flatMap { adminProject =>
+    val create = keystone.projects("admin", keystone.session.user.domainId).flatMap { adminProject =>
       // We need to set targetProjectId otherwise `list` will return an empty list
       transferRequests.create(zone.id, ZoneTransferRequest.Create(targetProjectId = Some(adminProject.id)))
     }

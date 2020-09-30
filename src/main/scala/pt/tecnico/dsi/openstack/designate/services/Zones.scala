@@ -7,9 +7,10 @@ import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.common.services.CrudService
 import pt.tecnico.dsi.openstack.designate.models._
+import pt.tecnico.dsi.openstack.keystone.models.Session
 
-final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
-  extends CrudService[F, Zone, Zone.Create, Zone.Update](baseUri, "zone", authToken, wrapped = false) { self =>
+final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
+  extends CrudService[F, Zone, Zone.Create, Zone.Update](baseUri, "zone", session.authToken, wrapped = false) { self =>
 
   def getByName(name: String, extraHeaders: Header*): F[Zone] =
     list(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError
@@ -31,11 +32,11 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
     list[Nameserver]("nameservers", uri / id / "nameservers", Query.empty, extraHeaders:_*)
 
   /** @return the Recordsets service class capable of iteracting with the recordsets of the zone with `id`. */
-  def recordsets(id: String): Recordsets[F] = new Recordsets(uri / id, authToken)
+  def recordsets(id: String): Recordsets[F] = new Recordsets(uri / id, session)
 
   object tasks {
     val uri: Uri = self.uri / "tasks"
-    val transferRequests: ZoneTransferRequests[F] = new ZoneTransferRequests(uri, authToken, self.uri / _ / "tasks")
-    val transferAccepts: ZoneTransferAccepts[F] = new ZoneTransferAccepts(uri, authToken)
+    val transferRequests: ZoneTransferRequests[F] = new ZoneTransferRequests(uri, session, self.uri / _ / "tasks")
+    val transferAccepts: ZoneTransferAccepts[F] = new ZoneTransferAccepts(uri, session)
   }
 }

@@ -7,17 +7,21 @@ import scala.util.Random
 import cats.effect.{ContextShift, IO, Resource, Timer}
 import cats.instances.list._
 import cats.syntax.traverse._
-import org.http4s.Uri
+import org.http4s.Headers
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.client.middleware.Logger
 import org.log4s._
 import org.scalatest._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
+import org.typelevel.ci.CIString
+import pt.tecnico.dsi.openstack.common.models.Identifiable
+import pt.tecnico.dsi.openstack.common.services.CrudService
 import pt.tecnico.dsi.openstack.designate.models.Zone
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
-import pt.tecnico.dsi.openstack.keystone.models.{CatalogEntry, Interface, Project}
+import pt.tecnico.dsi.openstack.keystone.models.Project
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll with OptionValues with EitherValues {
   val logger: Logger = getLogger
@@ -34,35 +38,30 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
 
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
 
-  //import org.http4s.client.middleware.Logger
-  //implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
-  implicit val httpClient: Client[IO] = _httpClient
-
+  //implicit val httpClient: Client[IO] = _httpClient
+  implicit val httpClient: Client[IO] = Logger(
+    logHeaders = true,
+    logBody = true,
+    redactHeadersWhen = (Headers.SensitiveHeaders ++ List(CIString("X-Auth-Token"), CIString("X-Subject-Token"))).contains)(_httpClient)
+  
   // This way we only authenticate to Openstack once, and make the logs smaller and easier to debug.
   val keystone: KeystoneClient[IO] = KeystoneClient.fromEnvironment().unsafeRunSync()
-  val designate: DesignateClient[IO] = {
-    val designateUrl = keystone.session.catalog.collectFirst {
-      case entry @ CatalogEntry("dns", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public)
-    }.flatten.getOrElse(throw new Exception("Could not find \"dns\" service in the catalog"))
-    new DesignateClient[IO](Uri.unsafeFromString(designateUrl), keystone.authToken)
-  }
+  val designate: DesignateClient[IO] = keystone.session.clientBuilder[IO](DesignateClient, sys.env("OS_REGION_NAME"))
+    .fold(s => throw new Exception(s), identity)
 
   // Not very purely functional :(
   val random = new Random()
   def randomName(): String = random.alphanumeric.take(10).mkString.dropWhile(_.isDigit).toLowerCase
   def withRandomName[T](f: String => IO[T]): IO[T] = IO.delay(randomName()).flatMap(f)
-
-  val withStubProject: Resource[IO, Project] = {
-    val create = withRandomName(name => keystone.projects.create(Project.Create(name)))
-    Resource.make(create)(project => keystone.projects.delete(project.id))
+  
+  def resourceCreator[R <: Identifiable, Create](service: CrudService[IO, R, Create, _])(create: String => Create): Resource[IO, R] = {
+    Resource.make(withRandomName(name => service(create(name))))(model => service.delete(model.id))
   }
-
-  val withStubZone: Resource[IO, Zone] = {
-    val create = withRandomName { name =>
-      val domain = s"$name.org"
-      designate.zones.create(Zone.Create(s"$domain.", s"joe@$domain"))
-    }
-    Resource.make(create)(zone => designate.zones.delete(zone.id))
+  val withStubProject: Resource[IO, Project] = resourceCreator(keystone.projects)(Project.Create(_))
+  
+  val withStubZone: Resource[IO, Zone] = resourceCreator(designate.zones) { name =>
+    val domain = s"$name.org"
+    Zone.Create(s"$domain.", s"joe@$domain")
   }
 
   implicit class RichIO[T](io: IO[T]) {

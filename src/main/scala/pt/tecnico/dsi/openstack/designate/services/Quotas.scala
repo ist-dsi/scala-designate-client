@@ -5,8 +5,9 @@ import org.http4s.client.Client
 import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.designate.models.Quota
+import pt.tecnico.dsi.openstack.keystone.models.Session
 
-class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends Service[F](authToken) {
+class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](session.authToken) {
   val uri: Uri = baseUri / "quotas"
 
   /**

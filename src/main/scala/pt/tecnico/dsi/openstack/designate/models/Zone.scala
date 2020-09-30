@@ -1,10 +1,13 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
+import cats.effect.Sync
 import enumeratum.{Circe, Enum, EnumEntry}
 import io.circe.derivation.{deriveCodec, renaming}
 import io.circe.{Codec, Decoder, Encoder}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
+import pt.tecnico.dsi.openstack.keystone.KeystoneClient
+import pt.tecnico.dsi.openstack.keystone.models.Project
 
 object Zone {
   sealed trait Type extends EnumEntry
@@ -48,7 +51,6 @@ case class Zone(
   email: String,
   status: Status,
   action: Action,
-  // TODO: "Version of this resource", failing test: WithId(model: Zone(version: 57 -> 58))
   version: Int,
   createdAt: LocalDateTime,
   serial: Int,
@@ -62,4 +64,6 @@ case class Zone(
   masters: List[String] = List.empty,
   attributes: Map[String, String] = Map.empty,
   links: List[Link] = List.empty,
-) extends Identifiable
+) extends Identifiable {
+  def project[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
+}

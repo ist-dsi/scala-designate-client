@@ -6,6 +6,8 @@ import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.designate.DesignateClient
+import pt.tecnico.dsi.openstack.keystone.KeystoneClient
+import pt.tecnico.dsi.openstack.keystone.models.Project
 
 object Recordset {
   implicit val codec: Codec.AsObject[Recordset] = deriveCodec(renaming.snakeCase)
@@ -47,6 +49,7 @@ case class Recordset(
   updatedAt: Option[LocalDateTime],
   links: List[Link] = List.empty,
 ) extends Identifiable {
-  def zone[F[_]: Sync](implicit d: DesignateClient[F]): F[Zone] = d.zones.apply(zoneId)
+  def project[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
+  def zone[F[_]: Sync](implicit designate: DesignateClient[F]): F[Zone] = designate.zones(zoneId)
 }
 

@@ -7,10 +7,11 @@ import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferAccept}
+import pt.tecnico.dsi.openstack.keystone.models.Session
 
 // This class does not extend CrudService because it is not possible to update and delete a ZoneTransferAccept.
 
-final class ZoneTransferAccepts[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F]) extends Service[F](authToken) {
+final class ZoneTransferAccepts[F[_]: Sync](baseUri: Uri, session: Session)(implicit client: Client[F]) extends Service[F](session.authToken) {
   val uri: Uri = baseUri / "transfer_accepts"
 
   /**

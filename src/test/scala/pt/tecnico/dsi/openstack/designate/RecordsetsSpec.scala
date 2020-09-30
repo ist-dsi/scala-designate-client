@@ -8,21 +8,21 @@ import pt.tecnico.dsi.openstack.designate.services.Recordsets
 class RecordsetsSpec extends Utils with BeforeAndAfterAll {
   // This way we use the same zone for every test, and make the logs smaller and easier to debug.
   val (zone, deleteZone) = withStubZone.allocated.unsafeRunSync()
-  override protected def afterAll(): Unit = deleteZone.unsafeRunSync()
+  override protected def afterAll(): Unit = {
+    deleteZone.unsafeRunSync()
+    super.afterAll()
+  }
 
   val recordsets: Recordsets[IO] = designate.zones.recordsets(zone.id)
-
-  val withStubRecord: Resource[IO, Recordset] = {
-    val create = withRandomName { name =>
-      recordsets.create(Recordset.Create(
-        name = s"$name.${zone.name}",
-        description = Some("This is an example record set."),
-        ttl = Some(3600),
-        `type` = "A",
-        records = List("10.1.0.2"),
-      ))
-    }
-    Resource.make(create)(record => recordsets.delete(record.id))
+  
+  val withStubRecord: Resource[IO, Recordset] = resourceCreator(recordsets) { name =>
+    Recordset.Create(
+      name = s"$name.${zone.name}",
+      description = Some("This is an example record set."),
+      ttl = Some(3600),
+      `type` = "A",
+      records = List("10.1.0.2"),
+    )
   }
 
   // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion is being applied inside of `Resource.use`

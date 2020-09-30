@@ -1,9 +1,13 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
+import cats.effect.Sync
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
+import pt.tecnico.dsi.openstack.designate.DesignateClient
+import pt.tecnico.dsi.openstack.keystone.KeystoneClient
+import pt.tecnico.dsi.openstack.keystone.models.Project
 
 object ZoneTransferRequest {
   implicit val codec: Codec.AsObject[ZoneTransferRequest] = deriveCodec(renaming.snakeCase)
@@ -36,4 +40,11 @@ case class ZoneTransferRequest(
   updatedAt: Option[LocalDateTime],
   targetProjectId: Option[String],
   links: List[Link] = List.empty,
-) extends Identifiable
+) extends Identifiable {
+  def project[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
+  def zone[F[_]: Sync](implicit neutron: DesignateClient[F]): F[Zone] = neutron.zones(zoneId)
+  def targetProject[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Option[Project]] = targetProjectId match {
+    case None => Sync[F].pure(Option.empty)
+    case Some(id) => keystone.projects.get(id)
+  }
+}

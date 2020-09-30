@@ -8,10 +8,11 @@ import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferRequest}
+import pt.tecnico.dsi.openstack.keystone.models.Session
 
 // This class does not extend CrudService because `create` receives an extra zoneId parameter.
 
-final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, authToken: Header, createUri: String => Uri) extends Service[F](authToken) {
+final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Session, createUri: String => Uri) extends Service[F](session.authToken) {
   val uri: Uri = baseUri / "transfer_requests"
 
   def list(status: Status, extraHeaders: Header*): Stream[F, ZoneTransferRequest] =
