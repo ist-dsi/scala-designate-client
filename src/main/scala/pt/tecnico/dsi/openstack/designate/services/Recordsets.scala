@@ -11,16 +11,28 @@ import pt.tecnico.dsi.openstack.keystone.models.Session
 final class Recordsets[F[_]: Sync: Client](baseUri: Uri, session: Session)
   extends CrudService[F, Recordset, Recordset.Create, Recordset.Update](baseUri, "recordset", session.authToken, wrapped = false) {
 
-  def getByName(name: String, extraHeaders: Header*): F[Recordset] =
-    list(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError
+  def getByName(name: String, extraHeaders: Header*): F[Option[Recordset]] =
+    stream(Query.fromPairs("name" -> name), extraHeaders:_*).compile.last
+  
+  def applyByName(name: String, extraHeaders: Header*): F[Recordset] =
+    stream(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError
 
   override def update(id: String, value: Recordset.Update, extraHeaders: Header*): F[Recordset] =
     super.put(wrappedAt, value, uri / id, extraHeaders:_*)
-
-  override def create(value: Recordset.Create, extraHeaders: Header*): F[Recordset] = createHandleConflict(value, extraHeaders:_*) {
-    getByName(value.name, extraHeaders:_*).flatMap { existing =>
-      val updated = Recordset.Update(value.records, value.ttl, value.description)
-      update(existing.id, updated, extraHeaders:_*)
-    }
+  
+  override def defaultResolveConflict(existing: Recordset, create: Recordset.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header]): F[Recordset] = {
+    val updated = Recordset.Update(
+      Option(create.records).filter(_ != existing.records),
+      if (create.ttl != existing.ttl) create.ttl else None,
+      if (create.description != existing.description) create.description else None,
+    )
+    if (updated.needsUpdate) update(existing.id, updated, extraHeaders:_*)
+    else Sync[F].pure(existing)
   }
+  
+  override def createOrUpdate(create: Recordset.Create, keepExistingElements: Boolean = true, extraHeaders: Seq[Header] = Seq.empty)
+    (resolveConflict: (Recordset, Recordset.Create) => F[Recordset] = defaultResolveConflict(_, _, keepExistingElements, extraHeaders)): F[Recordset] =
+    createHandleConflict(create, uri, extraHeaders) {
+      applyByName(create.name, extraHeaders:_*).flatMap(resolveConflict(_, create))
+    }
 }

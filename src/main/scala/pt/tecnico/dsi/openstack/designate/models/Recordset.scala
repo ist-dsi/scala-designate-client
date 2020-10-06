@@ -27,10 +27,16 @@ object Recordset {
     implicit val codec: Codec.AsObject[Update] = deriveCodec(renaming.snakeCase)
   }
   case class Update(
-    records: List[String],
+    records: Option[List[String]] = None,
     ttl: Option[Int] = None,
     description: Option[String] = None,
-  )
+  ) {
+    lazy val needsUpdate: Boolean = {
+      // We could implement this with the next line, but that implementation is less reliable if the fields of this class change
+      //  productIterator.asInstanceOf[Iterator[Option[Any]]].exists(_.isDefined)
+      List(records, ttl, description).exists(_.isDefined)
+    }
+  }
 }
 case class Recordset(
   id: String,

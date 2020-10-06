@@ -12,7 +12,10 @@ import pt.tecnico.dsi.openstack.keystone.models.Session
 class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](session.authToken) {
   val uri: Uri = baseUri / "reverse" / "floatingips"
 
-  def list(extraHeaders: Header*): Stream[F, FloatingIP] =
+  def stream(extraHeaders: Header*): Stream[F, FloatingIP] =
+    super.stream[FloatingIP]("floatingips", uri, Query.empty, extraHeaders:_*)
+  
+  def list(extraHeaders: Header*): F[List[FloatingIP]] =
     super.list[FloatingIP]("floatingips", uri, Query.empty, extraHeaders:_*)
 
   def get(region: String, floatingIpId: String, extraHeaders: Header*): F[Option[FloatingIP]] =

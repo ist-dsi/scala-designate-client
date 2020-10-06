@@ -26,7 +26,13 @@ object ZoneTransferRequest {
   case class Update(
     description: Option[String] = None,
     targetProjectId: Option[String] = None,
-  )
+  ) {
+    lazy val needsUpdate: Boolean = {
+      // We could implement this with the next line, but that implementation is less reliable if the fields of this class change
+      //  productIterator.asInstanceOf[Iterator[Option[Any]]].exists(_.isDefined)
+      List(description, targetProjectId).exists(_.isDefined)
+    }
+  }
 }
 case class ZoneTransferRequest(
   id: String,

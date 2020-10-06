@@ -32,5 +32,5 @@ class DesignateClient[F[_]: Sync](baseUri: Uri, session: Session)(implicit clien
     client.expect(GET(uri / "limits", session.authToken))
   }
 
-  def recordsets: Stream[F, Recordset] = new Recordsets[F](uri, session).list()
+  def recordsets: Stream[F, Recordset] = new Recordsets[F](uri, session).stream()
 }

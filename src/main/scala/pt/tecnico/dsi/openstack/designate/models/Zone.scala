@@ -43,7 +43,13 @@ object Zone {
     email: Option[String] = None,
     ttl: Option[Int] = None,
     description: Option[String] = None
-  )
+  ) {
+    lazy val needsUpdate: Boolean = {
+      // We could implement this with the next line, but that implementation is less reliable if the fields of this class change
+      //  productIterator.asInstanceOf[Iterator[Option[Any]]].exists(_.isDefined)
+      List(email, ttl, description).exists(_.isDefined)
+    }
+  }
 }
 case class Zone(
   id: String,

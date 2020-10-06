@@ -14,7 +14,7 @@ class ZonesSpec extends Utils {
 
   "The Zones service" should {
     "list zones" in withStubZone.use[IO, Assertion] { dummyZone =>
-      zones.list().compile.toList.idempotently(_ should contain (dummyZone))
+      zones.list().idempotently(_ should contain (dummyZone))
     }
 
     "create zones" in {
@@ -25,7 +25,7 @@ class ZonesSpec extends Utils {
           actual.name shouldBe zoneCreate.name
           actual.description shouldBe zoneCreate.description
         }
-        zone <- zones.getByName(zoneCreate.name)
+        zone <- zones.applyByName(zoneCreate.name)
         _ <- zones.delete(zone.id)
       } yield result
     }
@@ -62,7 +62,7 @@ class ZonesSpec extends Utils {
     }
 
     "list nameservers" in withStubZone.use[IO, Assertion] { dummyZone =>
-      zones.nameservers(dummyZone.id).compile.toList.idempotently { nameservers =>
+      zones.nameservers(dummyZone.id).idempotently { nameservers =>
         nameservers.length should be >= 1
       }
     }

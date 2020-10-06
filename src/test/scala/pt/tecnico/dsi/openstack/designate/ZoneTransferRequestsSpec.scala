@@ -24,17 +24,17 @@ class ZoneTransferRequestsSpec extends Utils {
 
   "Zone Transfer Requests Service" should {
     "list zones" in withStubZoneRequest.use[IO, Assertion] { request =>
-      transferRequests.list().compile.toList.idempotently(_ should contain (request))
+      transferRequests.list().idempotently(_ should contain (request))
     }
 
-    "create zone transfer request" in withStubZone.use[IO, Assertion] { zone =>
+    "createOrUpdate zone transfer request" in withStubZone.use[IO, Assertion] { zone =>
       for {
-        result <- transferRequests.create(zone.id, ZoneTransferRequest.Create()).idempotently { request =>
+        result <- transferRequests.createOrUpdate(zone.id, ZoneTransferRequest.Create()).idempotently { request =>
           request.zoneId shouldBe zone.id
           request.zoneName shouldBe zone.name
           request.key.nonEmpty shouldBe true
         }
-        requests <- transferRequests.list().compile.toList
+        requests <- transferRequests.list()
         _ <- requests.traverse(request => transferRequests.delete(request.id))
       } yield result
     }

@@ -51,12 +51,12 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
       val recordsetUpdate = Recordset.Update(
         ttl = Some(3601),
         description = Some("cool desc"),
-        records = List("10.1.1.1")
+        records = Some(List("10.1.1.1")),
       )
       recordsets.update(recordset.id, recordsetUpdate).idempotently { updated =>
         updated.ttl shouldBe recordsetUpdate.ttl
         updated.description shouldBe recordsetUpdate.description
-        updated.records shouldBe recordsetUpdate.records
+        updated.records shouldBe recordsetUpdate.records.value
       }
     }
 
@@ -65,7 +65,7 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
     }
 
     "list recordsets" in withStubRecord.use[IO, Assertion] { recordset =>
-      recordsets.list().compile.toList.idempotently { list =>
+      recordsets.list().idempotently { list =>
         list should contain (recordset)
       }
     }

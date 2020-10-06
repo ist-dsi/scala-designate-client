@@ -25,8 +25,8 @@ class ZoneTransferAcceptsSpec extends Utils {
     }
 
   "Zone Transfer Accept service" should {
-    "create zone transfer accept" in withStubZoneRequest.use[IO, Assertion] { case (request, sudoProjectIdHeader) =>
-      transferAccepts.create(request.key, request.id, sudoProjectIdHeader).idempotently { accept =>
+    "createWithDeduplication zone transfer accept" in withStubZoneRequest.use[IO, Assertion] { case (request, sudoProjectIdHeader) =>
+      transferAccepts.createWithDeduplication(request.key, request.id, sudoProjectIdHeader).idempotently { accept =>
         accept.status shouldBe Status.Complete
         accept.zoneId shouldBe request.zoneId
         accept.zoneTransferRequestId shouldBe request.id
@@ -34,7 +34,7 @@ class ZoneTransferAcceptsSpec extends Utils {
     }
 
     "list zone transfer accepts" in withStubZoneAccept { (accept, sudoProjectIdHeader) =>
-      transferAccepts.list(sudoProjectIdHeader).compile.toList.idempotently { list =>
+      transferAccepts.list(sudoProjectIdHeader).idempotently { list =>
         list should contain(accept.copy(key = None))
       }
     }
