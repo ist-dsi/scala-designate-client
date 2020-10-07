@@ -2,7 +2,7 @@ package pt.tecnico.dsi.openstack.designate
 
 import java.util.UUID
 import cats.effect.IO
-import org.http4s.client.UnexpectedStatus
+import pt.tecnico.dsi.openstack.common.models.UnexpectedStatus
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.Zone
 
@@ -17,10 +17,10 @@ class ZonesSpec extends Utils {
       zones.list().idempotently(_ should contain (dummyZone))
     }
 
-    "create zones" in {
+    "createOrUpdate zones" in {
       val zoneCreate = Zone.Create(s"zones${randomName()}.org.", "john.doe@zones.org")
       for {
-        result <- zones.create(zoneCreate).idempotently { actual =>
+        result <- zones.createOrUpdate(zoneCreate).idempotently { actual =>
           actual.email shouldBe zoneCreate.email
           actual.name shouldBe zoneCreate.name
           actual.description shouldBe zoneCreate.description

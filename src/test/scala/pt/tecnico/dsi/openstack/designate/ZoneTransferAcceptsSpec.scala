@@ -3,7 +3,7 @@ package pt.tecnico.dsi.openstack.designate
 import java.util.UUID
 import cats.effect.{IO, Resource}
 import org.http4s.Header
-import org.http4s.client.UnexpectedStatus
+import pt.tecnico.dsi.openstack.common.models.UnexpectedStatus
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferAccept, ZoneTransferRequest}
 

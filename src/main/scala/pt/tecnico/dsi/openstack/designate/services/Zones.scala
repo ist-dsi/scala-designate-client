@@ -17,6 +17,8 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
   def applyByName(name: String, extraHeaders: Header*): F[Zone] =
     stream(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError
   
+  override def update(id: String, update: Zone.Update, extraHeaders: Header*): F[Zone] =
+    super.patch(wrappedAt, update, uri / id, extraHeaders:_*)
   
   override def defaultResolveConflict(existing: Zone, create: Zone.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header]): F[Zone] = {
     val updated = Zone.Update(

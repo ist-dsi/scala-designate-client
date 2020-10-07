@@ -29,7 +29,7 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
   // instead of outside of `use`. We are explicit on the types params for `use` so Intellij doesn't show us an error.
 
   "Recordsets service" should {
-    "create recordsets" in {
+    "createOrUpdate recordsets" in {
       val recordsetCreate = Recordset.Create(
         name = s"${randomName()}.${zone.name}",
         description = Some("This is an example record set."),
@@ -37,7 +37,7 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
         `type` = "A",
         records = List("10.1.0.2"),
       )
-      recordsets.create(recordsetCreate).idempotently { recordset =>
+      recordsets.createOrUpdate(recordsetCreate).idempotently { recordset =>
         recordset.`type` shouldBe recordsetCreate.`type`
         recordset.zoneId shouldBe zone.id
         recordset.description shouldBe recordsetCreate.description

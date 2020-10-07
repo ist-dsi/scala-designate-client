@@ -4,7 +4,7 @@ import java.util.UUID
 import cats.effect.{IO, Resource}
 import cats.instances.list._
 import cats.syntax.traverse._
-import org.http4s.client.UnexpectedStatus
+import pt.tecnico.dsi.openstack.common.models.UnexpectedStatus
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.ZoneTransferRequest
 
