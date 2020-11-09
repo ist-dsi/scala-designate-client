@@ -8,7 +8,7 @@ import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferAccept, ZoneTransferRequest}
 
 class ZoneTransferAcceptsSpec extends Utils {
-  import designate.zones.tasks.{transferAccepts, transferRequests}
+  import designate.zones.{transferAccepts, transferRequests}
 
   val withStubZoneRequest: Resource[IO, (ZoneTransferRequest, Header)] = for {
     zone <- withStubZone

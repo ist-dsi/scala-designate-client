@@ -4,7 +4,7 @@ import cats.effect.Sync
 import fs2.Stream
 import io.circe.Encoder
 import org.http4s.client.Client
-import org.http4s.{Header, Query, Uri}
+import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.designate.models.FloatingIP
 import pt.tecnico.dsi.openstack.keystone.models.Session
@@ -13,10 +13,10 @@ class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Se
   val uri: Uri = baseUri / "reverse" / "floatingips"
 
   def stream(extraHeaders: Header*): Stream[F, FloatingIP] =
-    super.stream[FloatingIP]("floatingips", uri, Query.empty, extraHeaders:_*)
+    super.stream[FloatingIP]("floatingips", uri, extraHeaders:_*)
   
   def list(extraHeaders: Header*): F[List[FloatingIP]] =
-    super.list[FloatingIP]("floatingips", uri, Query.empty, extraHeaders:_*)
+    super.list[FloatingIP]("floatingips", uri, extraHeaders:_*)
 
   def get(region: String, floatingIpId: String, extraHeaders: Header*): F[Option[FloatingIP]] =
     super.getOption(wrappedAt = None, uri / s"$region:$floatingIpId", extraHeaders:_*)

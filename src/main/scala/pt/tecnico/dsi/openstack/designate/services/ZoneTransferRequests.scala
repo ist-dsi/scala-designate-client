@@ -22,7 +22,7 @@ final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Sess
   def list(extraHeaders: Header*): F[List[ZoneTransferRequest]] = list(Query.empty, extraHeaders:_*)
 
   def list(query: Query, extraHeaders: Header*): F[List[ZoneTransferRequest]] =
-    super.list[ZoneTransferRequest]("transfer_requests", uri, query, extraHeaders:_*)
+    super.list[ZoneTransferRequest]("transfer_requests", uri.copy(query = query), extraHeaders:_*)
   
   def stream(status: Status, extraHeaders: Header*): Stream[F, ZoneTransferRequest] =
     stream(Query.fromPairs("status" -> status.toString), extraHeaders:_*)
@@ -30,7 +30,7 @@ final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Sess
   def stream(extraHeaders: Header*): Stream[F, ZoneTransferRequest] = stream(Query.empty, extraHeaders:_*)
   
   def stream(query: Query, extraHeaders: Header*): Stream[F, ZoneTransferRequest] =
-    super.stream[ZoneTransferRequest]("transfer_requests", uri, query, extraHeaders:_*)
+    super.stream[ZoneTransferRequest]("transfer_requests", uri.copy(query = query), extraHeaders:_*)
   
   def create(zoneId: String, value: ZoneTransferRequest.Create, extraHeaders: Header*): F[ZoneTransferRequest] =
     super.post(wrappedAt = None, value, createUri(zoneId) / "transfer_requests", extraHeaders:_*)

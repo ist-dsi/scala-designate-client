@@ -9,7 +9,7 @@ import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.ZoneTransferRequest
 
 class ZoneTransferRequestsSpec extends Utils {
-  import designate.zones.tasks.transferRequests
+  import designate.zones.transferRequests
 
   val withStubZoneRequest: Resource[IO, ZoneTransferRequest] = withStubZone.flatMap { zone =>
     val create = keystone.projects("admin", keystone.session.user.domainId).flatMap { adminProject =>

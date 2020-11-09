@@ -16,9 +16,6 @@ final class Recordsets[F[_]: Sync: Client](baseUri: Uri, session: Session)
   
   def applyByName(name: String, extraHeaders: Header*): F[Recordset] =
     stream(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError
-
-  override def update(id: String, value: Recordset.Update, extraHeaders: Header*): F[Recordset] =
-    super.put(wrappedAt, value, uri / id, extraHeaders:_*)
   
   override def defaultResolveConflict(existing: Recordset, create: Recordset.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header]): F[Recordset] = {
     val updated = Recordset.Update(

@@ -26,5 +26,5 @@ case class ZoneTransferAccept(
   def project[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
   def zone[F[_]: Sync](implicit designate: DesignateClient[F]): F[Zone] = designate.zones(zoneId)
   def zoneTransferRequest[F[_]: Sync](implicit designate: DesignateClient[F]): F[ZoneTransferRequest] =
-    designate.zones.tasks.transferRequests(zoneTransferRequestId)
+    designate.zones.transferRequests(zoneTransferRequestId)
 }

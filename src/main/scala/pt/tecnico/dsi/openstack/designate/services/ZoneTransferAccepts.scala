@@ -18,7 +18,8 @@ final class ZoneTransferAccepts[F[_]: Sync](baseUri: Uri, session: Session)(impl
     super.post(wrappedAt = None, Map("key" -> key, "zone_transfer_request_id" -> zoneTransferRequestId), uri, extraHeaders:_*)
   
   /**
-   * A sort of idempotent create. If a Conflict is received and the zone transfer accept already exists   . Otherwise `F` will have an error.
+   * A sort of idempotent create. If a Conflict is received and the zone transfer accept already exists return it appending the key first.
+   * Otherwise `F` will have an error.
    *
    * Its impossible to implement an idempotent create because the API does not expose an update endpoint.
    *
@@ -45,15 +46,15 @@ final class ZoneTransferAccepts[F[_]: Sync](baseUri: Uri, session: Session)(impl
   def list(extraHeaders: Header*): F[List[ZoneTransferAccept]] = list(Query.empty, extraHeaders:_*)
 
   def list(query: Query, extraHeaders: Header*): F[List[ZoneTransferAccept]] =
-    super.list[ZoneTransferAccept]("transfer_accepts", uri, query, extraHeaders:_*)
+    super.list[ZoneTransferAccept]("transfer_accepts", uri.copy(query = query), extraHeaders:_*)
   
   def stream(status: Status, extraHeaders: Header*): Stream[F, ZoneTransferAccept] =
-    stream(Query.fromPairs("status" -> status.toString), extraHeaders:_*)
+    stream(Query.fromPairs("status" -> status.toString.toLowerCase), extraHeaders:_*)
   
   def stream(extraHeaders: Header*): Stream[F, ZoneTransferAccept] = stream(Query.empty, extraHeaders:_*)
   
   def stream(query: Query, extraHeaders: Header*): Stream[F, ZoneTransferAccept] =
-    super.stream[ZoneTransferAccept]("transfer_accepts", uri, query, extraHeaders:_*)
+    super.stream[ZoneTransferAccept]("transfer_accepts", uri.copy(query = query), extraHeaders:_*)
 
   def get(zoneTransferAcceptId: String, extraHeaders: Header*): F[Option[ZoneTransferAccept]] =
     super.getOption(wrappedAt = None, uri / zoneTransferAcceptId, extraHeaders:_*)

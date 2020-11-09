@@ -7,16 +7,13 @@ import scala.util.Random
 import cats.effect.{ContextShift, IO, Resource, Timer}
 import cats.instances.list._
 import cats.syntax.traverse._
-import org.http4s.Headers
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
-import org.http4s.client.middleware.Logger
 import org.log4s._
 import org.scalatest._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-import org.typelevel.ci.CIString
 import pt.tecnico.dsi.openstack.common.models.Identifiable
 import pt.tecnico.dsi.openstack.common.services.CrudService
 import pt.tecnico.dsi.openstack.designate.models.Zone
@@ -38,11 +35,14 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
 
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
 
-  //implicit val httpClient: Client[IO] = _httpClient
+  implicit val httpClient: Client[IO] = _httpClient
+  /*import org.http4s.Headers
+  import org.http4s.client.middleware.Logger
+  import org.typelevel.ci.CIString
   implicit val httpClient: Client[IO] = Logger(
     logHeaders = true,
     logBody = true,
-    redactHeadersWhen = (Headers.SensitiveHeaders ++ List(CIString("X-Auth-Token"), CIString("X-Subject-Token"))).contains)(_httpClient)
+    redactHeadersWhen = (Headers.SensitiveHeaders ++ List(CIString("X-Auth-Token"), CIString("X-Subject-Token"))).contains)(_httpClient)*/
   
   // This way we only authenticate to Openstack once, and make the logs smaller and easier to debug.
   val keystone: KeystoneClient[IO] = KeystoneClient.fromEnvironment().unsafeRunSync()

@@ -17,9 +17,6 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
   def applyByName(name: String, extraHeaders: Header*): F[Zone] =
     stream(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError
   
-  override def update(id: String, update: Zone.Update, extraHeaders: Header*): F[Zone] =
-    super.patch(wrappedAt, update, uri / id, extraHeaders:_*)
-  
   override def defaultResolveConflict(existing: Zone, create: Zone.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header]): F[Zone] = {
     val updated = Zone.Update(
       Option(create.email).filter(_ != existing.email),
@@ -35,7 +32,10 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
     createHandleConflict(create, uri, extraHeaders) {
       applyByName(create.name).flatMap(resolveConflict(_, create))
     }
-
+  
+  override def update(id: String, update: Zone.Update, extraHeaders: Header*): F[Zone] =
+    super.patch(wrappedAt, update, uri / id, extraHeaders:_*)
+  
   /**
    * Show the nameservers for a zone with `id`.
    *
@@ -43,14 +43,11 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
    * @param extraHeaders extra headers to include in the request.
    */
   def nameservers(id: String, extraHeaders: Header*): F[List[Nameserver]] =
-    list[Nameserver]("nameservers", uri / id / "nameservers", Query.empty, extraHeaders:_*)
+    list[Nameserver]("nameservers", uri / id / "nameservers", extraHeaders:_*)
 
   /** @return the Recordsets service class capable of iteracting with the recordsets of the zone with `id`. */
   def recordsets(id: String): Recordsets[F] = new Recordsets(uri / id, session)
 
-  object tasks {
-    val uri: Uri = self.uri / "tasks"
-    val transferRequests: ZoneTransferRequests[F] = new ZoneTransferRequests(uri, session, self.uri / _ / "tasks")
-    val transferAccepts: ZoneTransferAccepts[F] = new ZoneTransferAccepts(uri, session)
-  }
+  val transferRequests: ZoneTransferRequests[F] = new ZoneTransferRequests(uri / "tasks", session, self.uri / _ / "tasks")
+  val transferAccepts: ZoneTransferAccepts[F] = new ZoneTransferAccepts(uri / "tasks", session)
 }
