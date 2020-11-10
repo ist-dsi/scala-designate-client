@@ -3,7 +3,6 @@ package pt.tecnico.dsi.openstack.designate
 import java.util.UUID
 import cats.effect.{IO, Resource}
 import org.http4s.Header
-import pt.tecnico.dsi.openstack.common.models.UnexpectedStatus
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferAccept, ZoneTransferRequest}
 
@@ -56,7 +55,7 @@ class ZoneTransferAcceptsSpec extends Utils {
       transferAccepts.apply(accept.id, sudoProjectIdHeader).idempotently(compareFetchedAccept(_, accept))
     }
     "apply zone transfer accept (non-existing-id)" in {
-      transferAccepts.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [UnexpectedStatus])
+      transferAccepts.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [NoSuchElementException])
     }
   }
 }

@@ -7,33 +7,27 @@ import fs2.Stream
 import io.circe.Encoder
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
+import org.log4s.getLogger
 import pt.tecnico.dsi.openstack.common.services.Service
-import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferRequest}
+import pt.tecnico.dsi.openstack.designate.models.ZoneTransferRequest
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
 // This class does not extend CrudService because `create` receives an extra zoneId parameter.
 
 final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Session, createUri: String => Uri) extends Service[F](session.authToken) {
-  val uri: Uri = baseUri / "transfer_requests"
-
-  def list(status: Status, extraHeaders: Header*): F[List[ZoneTransferRequest]] =
-    list(Query.fromPairs("status" -> status.toString), extraHeaders:_*)
-
-  def list(extraHeaders: Header*): F[List[ZoneTransferRequest]] = list(Query.empty, extraHeaders:_*)
-
-  def list(query: Query, extraHeaders: Header*): F[List[ZoneTransferRequest]] =
-    super.list[ZoneTransferRequest]("transfer_requests", uri.copy(query = query), extraHeaders:_*)
+  val pluralName = "transfer_requests"
+  val uri: Uri = baseUri / pluralName
   
-  def stream(status: Status, extraHeaders: Header*): Stream[F, ZoneTransferRequest] =
-    stream(Query.fromPairs("status" -> status.toString), extraHeaders:_*)
-  
-  def stream(extraHeaders: Header*): Stream[F, ZoneTransferRequest] = stream(Query.empty, extraHeaders:_*)
-  
+  def stream(pairs: (String, String)*): Stream[F, ZoneTransferRequest] = stream(Query.fromPairs(pairs:_*))
   def stream(query: Query, extraHeaders: Header*): Stream[F, ZoneTransferRequest] =
-    super.stream[ZoneTransferRequest]("transfer_requests", uri.copy(query = query), extraHeaders:_*)
+    super.stream[ZoneTransferRequest](pluralName, uri.copy(query = query), extraHeaders:_*)
   
+  def list(pairs: (String, String)*): F[List[ZoneTransferRequest]] = list(Query.fromPairs(pairs:_*))
+  def list(query: Query, extraHeaders: Header*): F[List[ZoneTransferRequest]] =
+    super.list[ZoneTransferRequest](pluralName, uri.copy(query = query), extraHeaders:_*)
+
   def create(zoneId: String, value: ZoneTransferRequest.Create, extraHeaders: Header*): F[ZoneTransferRequest] =
-    super.post(wrappedAt = None, value, createUri(zoneId) / "transfer_requests", extraHeaders:_*)
+    super.post(wrappedAt = None, value, createUri(zoneId) / pluralName, extraHeaders:_*)
   
   /**
    * Default implementation to resolves the conflict that arises when implementing the createOrUpdate.
@@ -115,14 +109,20 @@ final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Sess
     (resolveConflict: (ZoneTransferRequest, ZoneTransferRequest.Create) => F[ZoneTransferRequest] = defaultResolveConflict(_, _, keepExistingElements,
       extraHeaders)): F[ZoneTransferRequest] = {
     super.postHandleConflict(wrappedAt = None, create, createUri(zoneId) / "transfer_requests", extraHeaders) {
-      stream(Query.empty, extraHeaders:_*).filter(_.zoneId == zoneId).head.compile.lastOrError.flatMap(resolveConflict(_, create))
+      stream(Query.empty, extraHeaders:_*).filter(_.zoneId == zoneId).head.compile.lastOrError.flatMap { existing =>
+        getLogger.info(s"createOrUpdate: found unique zone transfer_request (id: ${existing.id}) with the correct zoneId.")
+        resolveConflict(existing, create)
+      }
     }
   }
 
   def get(id: String, extraHeaders: Header*): F[Option[ZoneTransferRequest]] =
     super.getOption(wrappedAt = None, uri / id, extraHeaders:_*)
   def apply(id: String, extraHeaders: Header*): F[ZoneTransferRequest] =
-    super.get(wrappedAt = None, uri / id, extraHeaders:_*)
+    get(id, extraHeaders:_*).flatMap {
+      case Some(zoneTransferAccept) => F.pure(zoneTransferAccept)
+      case None => F.raiseError(new NoSuchElementException(s"""Could not find zone transfer accept with id "$id"."""))
+    }
 
   def update(id: String, value: ZoneTransferRequest.Update, extraHeaders: Header*)(implicit c: Encoder[ZoneTransferRequest.Update]): F[ZoneTransferRequest] =
     super.patch(wrappedAt = None, value, uri / id, extraHeaders:_*)

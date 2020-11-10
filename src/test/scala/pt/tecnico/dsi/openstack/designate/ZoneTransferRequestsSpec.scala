@@ -4,7 +4,6 @@ import java.util.UUID
 import cats.effect.{IO, Resource}
 import cats.instances.list._
 import cats.syntax.traverse._
-import pt.tecnico.dsi.openstack.common.models.UnexpectedStatus
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.ZoneTransferRequest
 
@@ -50,7 +49,7 @@ class ZoneTransferRequestsSpec extends Utils {
       transferRequests.apply(request.id).idempotently(_ shouldBe request)
     }
     "apply zone transfer request (non-existing id)" in {
-      transferRequests.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [UnexpectedStatus])
+      transferRequests.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [NoSuchElementException])
     }
 
     "update zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>

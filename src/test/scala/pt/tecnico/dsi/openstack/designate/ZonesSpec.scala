@@ -2,7 +2,6 @@ package pt.tecnico.dsi.openstack.designate
 
 import java.util.UUID
 import cats.effect.IO
-import pt.tecnico.dsi.openstack.common.models.UnexpectedStatus
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.Zone
 
@@ -41,7 +40,7 @@ class ZonesSpec extends Utils {
       zones.apply(dummyZone.id).idempotently(_ shouldBe dummyZone)
     }
     "apply zone (non-existing id)" in {
-      zones.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [UnexpectedStatus])
+      zones.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [NoSuchElementException])
     }
 
     "update zone" in withStubZone.use[IO, Assertion] { dummyZone =>

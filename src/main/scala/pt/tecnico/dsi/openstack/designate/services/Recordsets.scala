@@ -4,6 +4,7 @@ import cats.effect.Sync
 import cats.syntax.flatMap._
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
+import org.log4s.getLogger
 import pt.tecnico.dsi.openstack.common.services.CrudService
 import pt.tecnico.dsi.openstack.designate.models.Recordset
 import pt.tecnico.dsi.openstack.keystone.models.Session
@@ -15,7 +16,10 @@ final class Recordsets[F[_]: Sync: Client](baseUri: Uri, session: Session)
     stream(Query.fromPairs("name" -> name), extraHeaders:_*).compile.last
   
   def applyByName(name: String, extraHeaders: Header*): F[Recordset] =
-    stream(Query.fromPairs("name" -> name), extraHeaders:_*).compile.lastOrError
+    getByName(name, extraHeaders:_*).flatMap {
+      case Some(recordset) => F.pure(recordset)
+      case None => F.raiseError(new NoSuchElementException(s"""Could not find ${this.name} named "$name"."""))
+    }
   
   override def defaultResolveConflict(existing: Recordset, create: Recordset.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header]): F[Recordset] = {
     val updated = Recordset.Update(
@@ -30,6 +34,9 @@ final class Recordsets[F[_]: Sync: Client](baseUri: Uri, session: Session)
   override def createOrUpdate(create: Recordset.Create, keepExistingElements: Boolean = true, extraHeaders: Seq[Header] = Seq.empty)
     (resolveConflict: (Recordset, Recordset.Create) => F[Recordset] = defaultResolveConflict(_, _, keepExistingElements, extraHeaders)): F[Recordset] =
     createHandleConflict(create, uri, extraHeaders) {
-      applyByName(create.name, extraHeaders:_*).flatMap(resolveConflict(_, create))
+      stream(Query.fromPairs("name" -> create.name, "type" -> create.`type`), extraHeaders:_*).compile.lastOrError.flatMap { existing =>
+        getLogger.info(s"createOrUpdate: found unique $name (id: ${existing.id}) with the correct name and type.")
+        resolveConflict(existing, create)
+      }
     }
 }
