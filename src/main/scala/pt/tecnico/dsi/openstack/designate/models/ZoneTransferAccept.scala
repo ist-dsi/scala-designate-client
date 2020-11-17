@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
+import cats.derived
+import cats.derived.ShowPretty
 import cats.effect.Sync
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
@@ -11,6 +13,7 @@ import pt.tecnico.dsi.openstack.keystone.models.Project
 
 object ZoneTransferAccept {
   implicit val codec: Codec.AsObject[ZoneTransferAccept] = deriveCodec(renaming.snakeCase)
+  implicit val show: ShowPretty[ZoneTransferAccept] = derived.semiauto.showPretty
 }
 case class ZoneTransferAccept(
   id: String,

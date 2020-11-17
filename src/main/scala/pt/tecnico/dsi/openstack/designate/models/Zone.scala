@@ -1,30 +1,31 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
+import cats.derived.ShowPretty
 import cats.effect.Sync
-import enumeratum.{Circe, Enum, EnumEntry}
+import cats.{Show, derived}
+import enumeratum.EnumEntry.Uppercase
+import enumeratum.{CirceEnum, Enum, EnumEntry}
+import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
-import io.circe.{Codec, Decoder, Encoder}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.Project
 
 object Zone {
-  sealed trait Type extends EnumEntry
-  case object Type extends Enum[Type] {
-    implicit val circeEncoder: Encoder[Type] = Circe.encoderUppercase(this)
-    implicit val circeDecoder: Decoder[Type] = Circe.decoderUppercaseOnly(this)
-
+  sealed trait Type extends EnumEntry with Uppercase
+  case object Type extends Enum[Type] with CirceEnum[Type] {
     case object Primary   extends Type
     case object Secondary extends Type
-
+    
     val values: IndexedSeq[Type] = findValues
+    
+    implicit val show: Show[Type] = Show.fromToString
   }
-
-  implicit val codec: Codec[Zone] = deriveCodec(renaming.snakeCase)
 
   object Create {
     implicit val codec: Codec[Create] = deriveCodec(renaming.snakeCase)
+    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
   }
   case class Create(
     name: String,
@@ -35,9 +36,10 @@ object Zone {
     `type`: Zone.Type = Zone.Type.Primary,
     attributes: Map[String, String] = Map.empty
   )
-
+  
   object Update {
     implicit val codec: Codec[Update] = deriveCodec(renaming.snakeCase)
+    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
   }
   case class Update(
     email: Option[String] = None,
@@ -50,6 +52,9 @@ object Zone {
       List(email, ttl, description).exists(_.isDefined)
     }
   }
+  
+  implicit val codec: Codec[Zone] = deriveCodec(renaming.snakeCase)
+  implicit val show: ShowPretty[Zone] = derived.semiauto.showPretty
 }
 case class Zone(
   id: String,

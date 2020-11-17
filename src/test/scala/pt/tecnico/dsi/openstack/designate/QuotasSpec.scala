@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.openstack.designate
 
+import scala.annotation.nowarn
 import cats.effect.IO
+import cats.syntax.show._
 import org.http4s.Header
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.Quota
@@ -42,6 +44,14 @@ class QuotasSpec extends Utils {
 
     "reset quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
       designate.quotas.reset(dummyProject.id, allProjectsHeader).idempotently(_ shouldBe ())
+    }
+    
+    s"show quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
+      designate.quotas.get(dummyProject.id, allProjectsHeader).map { quotas =>
+        //This line is a fail fast mechanism, and prevents false positives from the linter
+        println(show"$quotas")
+        """show"$quotas"""" should compile: @nowarn
+      }
     }
   }
 

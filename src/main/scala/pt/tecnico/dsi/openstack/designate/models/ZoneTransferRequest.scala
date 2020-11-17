@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
+import cats.derived
+import cats.derived.ShowPretty
 import cats.effect.Sync
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
@@ -10,18 +12,18 @@ import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.Project
 
 object ZoneTransferRequest {
-  implicit val codec: Codec.AsObject[ZoneTransferRequest] = deriveCodec(renaming.snakeCase)
-
   object Create {
     implicit val codec: Codec.AsObject[Create] = deriveCodec(renaming.snakeCase)
+    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
   }
   case class Create(
     description: Option[String] = None,
     targetProjectId: Option[String] = None,
   )
-
+  
   object Update {
     implicit val codec: Codec.AsObject[Update] = deriveCodec(renaming.snakeCase)
+    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
   }
   case class Update(
     description: Option[String] = None,
@@ -33,6 +35,9 @@ object ZoneTransferRequest {
       List(description, targetProjectId).exists(_.isDefined)
     }
   }
+  
+  implicit val codec: Codec.AsObject[ZoneTransferRequest] = deriveCodec(renaming.snakeCase)
+  implicit val show: ShowPretty[ZoneTransferRequest] = derived.semiauto.showPretty
 }
 case class ZoneTransferRequest(
   id: String,

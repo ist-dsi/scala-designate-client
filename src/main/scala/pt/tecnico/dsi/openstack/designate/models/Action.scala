@@ -1,5 +1,6 @@
 package pt.tecnico.dsi.openstack.designate.models
 
+import cats.Show
 import enumeratum.{Circe, Enum, EnumEntry}
 import io.circe.{Decoder, Encoder}
 
@@ -14,4 +15,6 @@ case object Action extends Enum[Action] {
   case object Update  extends Action
 
   val values: IndexedSeq[Action] = findValues
+  
+  implicit val show: Show[Action] = Show.fromToString
 }

@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
+import cats.derived
+import cats.derived.ShowPretty
 import cats.effect.Sync
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
@@ -10,10 +12,9 @@ import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.Project
 
 object Recordset {
-  implicit val codec: Codec.AsObject[Recordset] = deriveCodec(renaming.snakeCase)
-
   object Create {
     implicit val codec: Codec.AsObject[Create] = deriveCodec(renaming.snakeCase)
+    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
   }
   case class Create(
     name: String,
@@ -22,9 +23,10 @@ object Recordset {
     ttl: Option[Int] = None,
     description: Option[String] = None,
   )
-
+  
   object Update {
     implicit val codec: Codec.AsObject[Update] = deriveCodec(renaming.snakeCase)
+    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
   }
   case class Update(
     records: Option[List[String]] = None,
@@ -37,6 +39,9 @@ object Recordset {
       List(records, ttl, description).exists(_.isDefined)
     }
   }
+  
+  implicit val codec: Codec.AsObject[Recordset] = deriveCodec(renaming.snakeCase)
+  implicit val show: ShowPretty[Recordset] = derived.semiauto.showPretty
 }
 case class Recordset(
   id: String,
