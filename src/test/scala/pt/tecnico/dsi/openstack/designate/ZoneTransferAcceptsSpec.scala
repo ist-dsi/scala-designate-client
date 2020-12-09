@@ -4,7 +4,7 @@ import java.util.UUID
 import scala.annotation.nowarn
 import cats.effect.{IO, Resource}
 import cats.syntax.show._
-import org.http4s.Header
+import org.http4s.{Header, Query}
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferAccept, ZoneTransferRequest}
 
@@ -35,7 +35,7 @@ class ZoneTransferAcceptsSpec extends Utils {
     }
     
     "list zone transfer accepts" in withStubZoneAccept { (accept, sudoProjectIdHeader) =>
-      transferAccepts.list(sudoProjectIdHeader).idempotently { list =>
+      transferAccepts.list(Query.empty, sudoProjectIdHeader).idempotently { list =>
         list should contain(accept.copy(key = None))
       }
     }

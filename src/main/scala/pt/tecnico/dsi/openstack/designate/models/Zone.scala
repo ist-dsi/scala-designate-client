@@ -8,6 +8,7 @@ import enumeratum.EnumEntry.Uppercase
 import enumeratum.{CirceEnum, Enum, EnumEntry}
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
+import io.chrisdavenport.cats.time.localdatetimeInstances
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.Project

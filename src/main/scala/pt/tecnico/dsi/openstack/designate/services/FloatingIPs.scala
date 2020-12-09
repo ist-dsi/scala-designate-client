@@ -2,23 +2,18 @@ package pt.tecnico.dsi.openstack.designate.services
 
 import cats.effect.Sync
 import cats.syntax.flatMap._
-import fs2.Stream
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.openstack.common.services.Service
+import pt.tecnico.dsi.openstack.common.services.{BaseCrudService, ListOperations}
 import pt.tecnico.dsi.openstack.designate.models.FloatingIP
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
-class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](session.authToken) {
-  val pluralName = "floatingips"
-  val uri: Uri = baseUri / "reverse" / pluralName
-
-  def stream(extraHeaders: Header*): Stream[F, FloatingIP] =
-    super.stream[FloatingIP](pluralName, uri, extraHeaders:_*)
+class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, session: Session) extends BaseCrudService[F](baseUri, "floatingip", session.authToken)
+  with ListOperations[F, FloatingIP] {
+  override val uri: Uri = baseUri / "reverse" / pluralName
   
-  def list(extraHeaders: Header*): F[List[FloatingIP]] =
-    super.list[FloatingIP](pluralName, uri, extraHeaders:_*)
+  implicit val modelDecoder: Decoder[FloatingIP] = FloatingIP.codec
 
   def get(region: String, floatingIpId: String, extraHeaders: Header*): F[Option[FloatingIP]] =
     super.getOption(wrappedAt = None, uri / s"$region:$floatingIpId", extraHeaders:_*)
@@ -35,4 +30,3 @@ class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Se
   def unset(region: String, floatingIP: String, extraHeaders: Header*): F[Unit] =
     super.patch(wrappedAt = None, Map("ptrdname" -> None), uri / s"$region:$floatingIP", extraHeaders:_*)
 }
-

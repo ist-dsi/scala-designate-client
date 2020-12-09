@@ -12,34 +12,40 @@ class QuotasSpec extends Utils {
 
   // These are the default quotas for the Designate we are testing against
   val defaultQuota = Quota(
-    apiExportSize = 1000,
-    recordsetRecords = 20,
-    zoneRecords = 500,
-    zoneRecordsets = 500,
     zones = 10,
+    zoneRecordsets = 500,
+    zoneRecords = 500,
+    recordsetRecords = 20,
+    apiExportSize = 1000,
   )
 
   // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion its being applied inside of `Resource.use`
   // instead of outside of `use`. We are explicit on the types params for `use` so Intellij doesn't show us an error.
 
   "The Quotas service" should {
-    "get quotas for the current project" in {
-      designate.quotas.get().idempotently(_ shouldBe defaultQuota)
+    s"apply quotas (existing id)" in withStubProject.use[IO, Assertion] { dummyProject =>
+      designate.quotas.apply(dummyProject.id, allProjectsHeader).idempotently(_ shouldBe defaultQuota)
     }
-
-    "get quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
-      designate.quotas.get(dummyProject.id, allProjectsHeader).idempotently(_ shouldBe defaultQuota)
+    s"apply quotas (non-existing id)" in {
+      // This is not a mistake in the test. Designate returns a Quota even if the project does not exist :faceplam:
+      designate.quotas.apply("non-existing-id", allProjectsHeader).idempotently(_ shouldBe defaultQuota)
     }
-
+    
     "update quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
-      val newQuotas = Quota(
-        apiExportSize = 20,
-        recordsetRecords = 30,
-        zoneRecords = 10,
-        zoneRecordsets = 25,
-        zones = 15
+      val newQuotas = Quota.Update(
+        zones = Some(15),
+        zoneRecords = Some(10),
+        zoneRecordsets = Some(25),
+        recordsetRecords = Some(30),
+        apiExportSize = Some(20),
       )
-      designate.quotas.update(dummyProject.id, newQuotas, allProjectsHeader).idempotently( _ shouldBe newQuotas)
+      designate.quotas.update(dummyProject.id, newQuotas, allProjectsHeader).idempotently { quota =>
+        quota.zones shouldBe newQuotas.zones.value
+        quota.zoneRecords shouldBe newQuotas.zoneRecords.value
+        quota.zoneRecordsets shouldBe newQuotas.zoneRecordsets.value
+        quota.recordsetRecords shouldBe newQuotas.recordsetRecords.value
+        quota.apiExportSize shouldBe newQuotas.apiExportSize.value
+      }
     }
 
     "reset quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
@@ -47,7 +53,7 @@ class QuotasSpec extends Utils {
     }
     
     s"show quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
-      designate.quotas.get(dummyProject.id, allProjectsHeader).map { quotas =>
+      designate.quotas(dummyProject.id, allProjectsHeader).map { quotas =>
         //This line is a fail fast mechanism, and prevents false positives from the linter
         println(show"$quotas")
         """show"$quotas"""" should compile: @nowarn

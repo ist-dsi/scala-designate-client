@@ -3,31 +3,28 @@ package pt.tecnico.dsi.openstack.designate.services
 import scala.annotation.nowarn
 import cats.effect.Sync
 import cats.syntax.flatMap._
-import fs2.Stream
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import org.log4s.getLogger
-import pt.tecnico.dsi.openstack.common.services.Service
+import pt.tecnico.dsi.openstack.common.services._
 import pt.tecnico.dsi.openstack.designate.models.ZoneTransferRequest
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
 // This class does not extend CrudService because `create` receives an extra zoneId parameter.
 
-final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Session, createUri: String => Uri) extends Service[F](session.authToken) {
-  val pluralName = "transfer_requests"
-  val uri: Uri = baseUri / pluralName
+final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Session, createUri: String => Uri)
+  extends BaseCrudService[F](baseUri, "transfer_request", session.authToken, wrapped = false)
+    with UpdateOperations[F, ZoneTransferRequest, ZoneTransferRequest.Update]
+    with ListOperations[F, ZoneTransferRequest]
+    with ReadOperations[F, ZoneTransferRequest]
+    with DeleteOperations[F, ZoneTransferRequest] {
   
-  def stream(pairs: (String, String)*): Stream[F, ZoneTransferRequest] = stream(Query.fromPairs(pairs:_*))
-  def stream(query: Query, extraHeaders: Header*): Stream[F, ZoneTransferRequest] =
-    super.stream[ZoneTransferRequest](pluralName, uri.copy(query = query), extraHeaders:_*)
+  override implicit val modelDecoder: Decoder[ZoneTransferRequest] = ZoneTransferRequest.codec
+  override implicit val updateEncoder: Encoder[ZoneTransferRequest.Update] = ZoneTransferRequest.Update.codec
   
-  def list(pairs: (String, String)*): F[List[ZoneTransferRequest]] = list(Query.fromPairs(pairs:_*))
-  def list(query: Query, extraHeaders: Header*): F[List[ZoneTransferRequest]] =
-    super.list[ZoneTransferRequest](pluralName, uri.copy(query = query), extraHeaders:_*)
-
   def create(zoneId: String, value: ZoneTransferRequest.Create, extraHeaders: Header*): F[ZoneTransferRequest] =
-    super.post(wrappedAt = None, value, createUri(zoneId) / pluralName, extraHeaders:_*)
+    super.post(wrappedAt, value, createUri(zoneId) / pluralName, extraHeaders:_*)
   
   /**
    * Default implementation to resolves the conflict that arises when implementing the createOrUpdate.
@@ -48,7 +45,6 @@ final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Sess
     if (updated.needsUpdate) update(existing.id, updated, extraHeaders:_*)
     else Sync[F].pure(existing)
   }
-  
   /**
    * An idempotent create. If the model that is to be created already exists then it will be updated, or simply returned if no modifications
    * are necessary. The definition on what is considered already existing is left to the implementation as it is specific to the `Model`
@@ -84,6 +80,7 @@ final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Sess
    */
   def createOrUpdate(zoneId: String, create: ZoneTransferRequest.Create, keepExistingElements: Boolean, extraHeaders: Header*): F[ZoneTransferRequest] =
     createOrUpdate(zoneId, create, keepExistingElements, extraHeaders)()
+  
   /**
    * An idempotent create. If the model that is to be created already exists then it will be updated, or simply returned if no modifications
    * are necessary. The definition on what is considered already existing is left to the implementation as it is specific to the `Model`
@@ -108,25 +105,14 @@ final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Sess
   def createOrUpdate(zoneId: String, create: ZoneTransferRequest.Create, keepExistingElements: Boolean = true, extraHeaders: Seq[Header] = Seq.empty)
     (resolveConflict: (ZoneTransferRequest, ZoneTransferRequest.Create) => F[ZoneTransferRequest] = defaultResolveConflict(_, _, keepExistingElements,
       extraHeaders)): F[ZoneTransferRequest] = {
-    super.postHandleConflict(wrappedAt = None, create, createUri(zoneId) / "transfer_requests", extraHeaders) {
+    super.postHandleConflict(wrappedAt, create, createUri(zoneId) / "transfer_requests", extraHeaders) {
       stream(Query.empty, extraHeaders:_*).filter(_.zoneId == zoneId).head.compile.lastOrError.flatMap { existing =>
         getLogger.info(s"createOrUpdate: found unique zone transfer_request (id: ${existing.id}) with the correct zoneId.")
         resolveConflict(existing, create)
       }
     }
   }
-
-  def get(id: String, extraHeaders: Header*): F[Option[ZoneTransferRequest]] =
-    super.getOption(wrappedAt = None, uri / id, extraHeaders:_*)
-  def apply(id: String, extraHeaders: Header*): F[ZoneTransferRequest] =
-    get(id, extraHeaders:_*).flatMap {
-      case Some(zoneTransferAccept) => F.pure(zoneTransferAccept)
-      case None => F.raiseError(new NoSuchElementException(s"""Could not find zone transfer accept with id "$id"."""))
-    }
-
-  def update(id: String, value: ZoneTransferRequest.Update, extraHeaders: Header*)(implicit c: Encoder[ZoneTransferRequest.Update]): F[ZoneTransferRequest] =
-    super.patch(wrappedAt = None, value, uri / id, extraHeaders:_*)
-
-  def delete(request: ZoneTransferRequest, extraHeaders: Header*): F[Unit] = delete(request.id, extraHeaders:_*)
-  def delete(id: String, extraHeaders: Header*): F[Unit] = super.delete(uri / id, extraHeaders:_*)
+  
+  override def update(id: String, value: ZoneTransferRequest.Update, extraHeaders: Header*): F[ZoneTransferRequest] =
+    super.patch(wrappedAt, value, uri / id, extraHeaders:_*)
 }
