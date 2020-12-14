@@ -4,12 +4,12 @@ import cats.effect.Sync
 import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.openstack.common.services.{BaseCrudService, UpdateOperations}
+import pt.tecnico.dsi.openstack.common.services.{PartialCrudService, UpdateOperations}
 import pt.tecnico.dsi.openstack.designate.models.Quota
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
 class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session)
-  extends BaseCrudService[F](baseUri, "quota", session.authToken, wrapped = false)
+  extends PartialCrudService[F](baseUri, "quota", session.authToken, wrapped = false)
     with UpdateOperations[F, Quota, Quota.Update] {
   override implicit val modelDecoder: Decoder[Quota] = Quota.codec
   override implicit val updateEncoder: Encoder[Quota.Update] = Quota.Update.codec

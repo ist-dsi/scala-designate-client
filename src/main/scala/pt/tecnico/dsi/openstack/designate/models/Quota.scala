@@ -21,6 +21,15 @@ object Quota {
   implicit val codec: Codec.AsObject[Quota] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
 }
+
+/**
+ * A value of -1 means no limit.
+ * @param zones number of zones allowed for each project.
+ * @param zoneRecords number of records allowed per zone.
+ * @param zoneRecordsets number of recordsets allowed per zone.
+ * @param recordsetRecords number of records allowed per recordset.
+ * @param apiExportSize number of recordsets allowed in a zone export.
+ */
 case class Quota(
   zones: Int,
   zoneRecords: Int,

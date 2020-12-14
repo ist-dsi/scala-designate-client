@@ -14,7 +14,7 @@ import pt.tecnico.dsi.openstack.keystone.models.Session
 // This class does not extend CrudService because `create` receives an extra zoneId parameter.
 
 final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Session, createUri: String => Uri)
-  extends BaseCrudService[F](baseUri, "transfer_request", session.authToken, wrapped = false)
+  extends PartialCrudService[F](baseUri, "transfer_request", session.authToken, wrapped = false)
     with UpdateOperations[F, ZoneTransferRequest, ZoneTransferRequest.Update]
     with ListOperations[F, ZoneTransferRequest]
     with ReadOperations[F, ZoneTransferRequest]

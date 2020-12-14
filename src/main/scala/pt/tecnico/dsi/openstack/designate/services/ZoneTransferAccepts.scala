@@ -7,12 +7,12 @@ import io.circe.Decoder
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import org.log4s.getLogger
-import pt.tecnico.dsi.openstack.common.services.{BaseCrudService, ListOperations, ReadOperations}
+import pt.tecnico.dsi.openstack.common.services.{PartialCrudService, ListOperations, ReadOperations}
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferAccept}
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
 final class ZoneTransferAccepts[F[_]: Sync: Client](baseUri: Uri, session: Session)
-  extends BaseCrudService[F](baseUri, "transfer_accept", session.authToken, wrapped = false)
+  extends PartialCrudService[F](baseUri, "transfer_accept", session.authToken, wrapped = false)
     with ListOperations[F, ZoneTransferAccept]
     with ReadOperations[F, ZoneTransferAccept] {
   
