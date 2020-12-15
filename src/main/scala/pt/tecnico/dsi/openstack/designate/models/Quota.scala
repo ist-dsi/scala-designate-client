@@ -16,7 +16,13 @@ object Quota {
     zoneRecordsets: Option[Int] = None,
     recordsetRecords: Option[Int] = None,
     apiExportSize: Option[Int] = None,
-  )
+  ) {
+    lazy val needsUpdate: Boolean = {
+      // We could implement this with the next line, but that implementation is less reliable if the fields of this class change
+      //  productIterator.asInstanceOf[Iterator[Option[Any]]].exists(_.isDefined)
+      List(zones, zoneRecords, zoneRecordsets, recordsetRecords, apiExportSize).exists(_.isDefined)
+    }
+  }
   
   implicit val codec: Codec.AsObject[Quota] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
