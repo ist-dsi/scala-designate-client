@@ -34,7 +34,7 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
   override def createOrUpdate(create: Zone.Create, keepExistingElements: Boolean = true, extraHeaders: Seq[Header] = Seq.empty)
     (resolveConflict: (Zone, Zone.Create) => F[Zone] = defaultResolveConflict(_, _, keepExistingElements, extraHeaders)): F[Zone] =
     createHandleConflict(create, uri, extraHeaders) {
-      applyByName(create.name).flatMap { existing =>
+      applyByName(create.name, extraHeaders:_*).flatMap { existing =>
         getLogger.info(s"createOrUpdate: found unique $name (id: ${existing.id}) with the correct name.")
         resolveConflict(existing, create)
       }
