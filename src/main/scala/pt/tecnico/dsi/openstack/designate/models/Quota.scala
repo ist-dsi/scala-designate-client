@@ -9,6 +9,13 @@ object Quota {
   object Update {
     implicit val codec: Codec.AsObject[Update] = deriveCodec(renaming.snakeCase)
     implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
+    val zero: Update = Update(
+      zones = Some(0),
+      zoneRecords = Some(0),
+      zoneRecordsets = Some(0),
+      recordsetRecords = Some(0),
+      apiExportSize = Some(0),
+    )
   }
   case class Update(
     zones: Option[Int] = None,
