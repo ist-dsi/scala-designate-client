@@ -47,7 +47,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
     )(_httpClient)*/
   
   // This way we only authenticate to Openstack once, and make the logs smaller and easier to debug.
-  val keystone: KeystoneClient[IO] = KeystoneClient.fromEnvironment().unsafeRunSync()
+  val keystone: KeystoneClient[IO] = KeystoneClient.authenticateFromEnvironment().unsafeRunSync()
   val designate: DesignateClient[IO] = keystone.session.clientBuilder[IO](DesignateClient, sys.env("OS_REGION_NAME"))
     .fold(s => throw new Exception(s), identity)
 
