@@ -24,7 +24,7 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
   override def defaultResolveConflict(existing: Zone, create: Zone.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header]): F[Zone] = {
     val updated = Zone.Update(
       Option(create.email).filter(_ != existing.email),
-      if (create.ttl != existing.ttl) create.ttl else None,
+      create.ttl.filter(_ != existing.ttl),
       if (create.description != existing.description) create.description else None,
     )
     if (updated.needsUpdate) update(existing.id, updated, extraHeaders:_*)

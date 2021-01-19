@@ -70,7 +70,7 @@ case class Zone(
   projectId: String,
   transferredAt: Option[LocalDateTime] = None,
   updatedAt: Option[LocalDateTime] = None,
-  ttl: Option[Int] = None,
+  ttl: Int,
   description: Option[String] = None,
   `type`: Zone.Type = Zone.Type.Primary,
   masters: List[String] = List.empty,

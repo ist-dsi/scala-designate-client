@@ -55,7 +55,7 @@ class ZonesSpec extends Utils {
       zones.update(dummyZone.id, dummyZoneUpdate).idempotently { actual =>
         dummyZoneUpdate.email.forall(_ == actual.email) shouldBe true
         dummyZoneUpdate.description shouldBe actual.description
-        dummyZoneUpdate.ttl shouldBe actual.ttl
+        dummyZoneUpdate.ttl.value shouldBe actual.ttl
       }
     }
     
