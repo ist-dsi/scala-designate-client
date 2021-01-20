@@ -33,8 +33,8 @@ object Zone {
     email: String,
     ttl: Option[Int] = None,
     description: Option[String] = None,
-    masters: List[String] = List.empty,
     `type`: Zone.Type = Zone.Type.Primary,
+    masters: Option[List[String]] = None,
     attributes: Map[String, String] = Map.empty
   )
   
