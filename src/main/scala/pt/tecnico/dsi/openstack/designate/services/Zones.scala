@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.designate.services
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.flatMap._
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
@@ -9,7 +9,7 @@ import pt.tecnico.dsi.openstack.common.services.CrudService
 import pt.tecnico.dsi.openstack.designate.models._
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
-final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
+final class Zones[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   extends CrudService[F, Zone, Zone.Create, Zone.Update](baseUri, "zone", session.authToken, wrapped = false) {
 
   def getByName(name: String, extraHeaders: Header*): F[Option[Zone]] =
@@ -28,7 +28,7 @@ final class Zones[F[_]: Sync: Client](baseUri: Uri, session: Session)
       if (create.description != existing.description) create.description else None,
     )
     if (updated.needsUpdate) update(existing.id, updated, extraHeaders:_*)
-    else Sync[F].pure(existing)
+    else Concurrent[F].pure(existing)
   }
   
   override def createOrUpdate(create: Zone.Create, keepExistingElements: Boolean = true, extraHeaders: Seq[Header] = Seq.empty)

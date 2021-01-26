@@ -1,9 +1,10 @@
 package pt.tecnico.dsi.openstack.designate
 
+import cats.effect.unsafe.implicits.global
 import scala.annotation.nowarn
 import cats.effect.{IO, Resource}
 import cats.syntax.show._
-import org.scalatest.{Assertion, BeforeAndAfterAll}
+import org.scalatest.BeforeAndAfterAll
 import pt.tecnico.dsi.openstack.designate.models.Recordset
 import pt.tecnico.dsi.openstack.designate.services.Recordsets
 
@@ -27,9 +28,6 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
     )
   }
   
-  // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion is being applied inside of `Resource.use`
-  // instead of outside of `use`. We are explicit on the types params for `use` so Intellij doesn't show us an error.
-  
   "Recordsets service" should {
     "createOrUpdate recordsets" in {
       val recordsetCreate = Recordset.Create(
@@ -49,7 +47,7 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
       }
     }
     
-    "update recordsets" in withStubRecord.use[IO, Assertion] { recordset =>
+    "update recordsets" in withStubRecord.use { recordset =>
       val recordsetUpdate = Recordset.Update(
         ttl = Some(3601),
         description = Some("cool desc"),
@@ -62,17 +60,17 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
       }
     }
     
-    "delete recordsets" in withStubRecord.use[IO, Assertion] { recordset =>
+    "delete recordsets" in withStubRecord.use { recordset =>
       recordsets.delete(recordset.id).idempotently(_ shouldBe ())
     }
     
-    "list recordsets" in withStubRecord.use[IO, Assertion] { recordset =>
+    "list recordsets" in withStubRecord.use { recordset =>
       recordsets.list().idempotently { list =>
         list should contain (recordset)
       }
     }
     
-    s"show recordsets" in withStubRecord.use[IO, Assertion] { model =>
+    s"show recordsets" in withStubRecord.use { model =>
       //This line is a fail fast mechanism, and prevents false positives from the linter
       println(show"$model")
       IO("""show"$model"""" should compile): @nowarn

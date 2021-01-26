@@ -3,7 +3,6 @@ package pt.tecnico.dsi.openstack.designate.models
 import java.time.LocalDateTime
 import cats.derived
 import cats.derived.ShowPretty
-import cats.effect.Sync
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
 import io.chrisdavenport.cats.time.localdatetimeInstances
@@ -61,7 +60,7 @@ case class Recordset(
   updatedAt: Option[LocalDateTime],
   links: List[Link] = List.empty,
 ) extends Identifiable {
-  def project[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
-  def zone[F[_]: Sync](implicit designate: DesignateClient[F]): F[Zone] = designate.zones(zoneId)
+  def project[F[_]](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
+  def zone[F[_]](implicit designate: DesignateClient[F]): F[Zone] = designate.zones(zoneId)
 }
 

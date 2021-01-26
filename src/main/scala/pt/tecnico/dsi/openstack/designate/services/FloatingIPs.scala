@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.designate.services
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.flatMap._
 import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
@@ -9,7 +9,7 @@ import pt.tecnico.dsi.openstack.common.services.{ListOperations, PartialCrudServ
 import pt.tecnico.dsi.openstack.designate.models.FloatingIP
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
-class FloatingIPs[F[_]: Sync: Client](baseUri: Uri, session: Session) extends PartialCrudService[F](baseUri, "floatingip", session.authToken)
+class FloatingIPs[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends PartialCrudService[F](baseUri, "floatingip", session.authToken)
   with ListOperations[F, FloatingIP] {
   override val uri: Uri = baseUri / "reverse" / pluralName
   

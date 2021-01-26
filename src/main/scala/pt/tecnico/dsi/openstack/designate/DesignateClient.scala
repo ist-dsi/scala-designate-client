@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.designate
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import fs2.Stream
 import io.circe.Decoder
 import org.http4s.Method.GET
@@ -15,10 +15,10 @@ object DesignateClient extends ClientBuilder {
   final type OpenstackClient[F[_]] = DesignateClient[F]
   final val `type`: String = "dns"
   
-  override def apply[F[_]: Sync: Client](baseUri: Uri, session: Session): DesignateClient[F] =
+  override def apply[F[_]: Concurrent: Client](baseUri: Uri, session: Session): DesignateClient[F] =
     new DesignateClient[F](baseUri, session)
 }
-class DesignateClient[F[_]: Sync](baseUri: Uri, session: Session)(implicit client: Client[F]) {
+class DesignateClient[F[_]: Concurrent](baseUri: Uri, session: Session)(implicit client: Client[F]) {
   val uri: Uri = if (baseUri.path.dropEndsWithSlash.toString.endsWith("v2")) baseUri else baseUri / "v2"
 
   val zones = new Zones[F](uri, session)

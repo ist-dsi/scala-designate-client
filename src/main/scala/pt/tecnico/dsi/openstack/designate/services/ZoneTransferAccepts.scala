@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.designate.services
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.flatMap._
 import fs2.Stream
 import io.circe.Decoder
@@ -11,7 +11,7 @@ import pt.tecnico.dsi.openstack.common.services.{PartialCrudService, ListOperati
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferAccept}
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
-final class ZoneTransferAccepts[F[_]: Sync: Client](baseUri: Uri, session: Session)
+final class ZoneTransferAccepts[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   extends PartialCrudService[F](baseUri, "transfer_accept", session.authToken, wrapped = false)
     with ListOperations[F, ZoneTransferAccept]
     with ReadOperations[F, ZoneTransferAccept] {

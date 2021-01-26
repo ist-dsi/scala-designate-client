@@ -2,7 +2,6 @@ package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
 import cats.derived.ShowPretty
-import cats.effect.Sync
 import cats.{Show, derived}
 import enumeratum.EnumEntry.Uppercase
 import enumeratum.{CirceEnum, Enum, EnumEntry}
@@ -77,5 +76,5 @@ case class Zone(
   attributes: Map[String, String] = Map.empty,
   links: List[Link] = List.empty,
 ) extends Identifiable {
-  def project[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
+  def project[F[_]](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
 }

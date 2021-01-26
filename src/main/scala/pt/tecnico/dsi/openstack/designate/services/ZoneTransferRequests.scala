@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.openstack.designate.services
 
 import scala.annotation.nowarn
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.flatMap._
 import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
@@ -13,7 +13,7 @@ import pt.tecnico.dsi.openstack.keystone.models.Session
 
 // This class does not extend CrudService because `create` receives an extra zoneId parameter.
 
-final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Session, createUri: String => Uri)
+final class ZoneTransferRequests[F[_]: Concurrent: Client](baseUri: Uri, session: Session, createUri: String => Uri)
   extends PartialCrudService[F](baseUri, "transfer_request", session.authToken, wrapped = false)
     with UpdateOperations[F, ZoneTransferRequest, ZoneTransferRequest.Update]
     with ListOperations[F, ZoneTransferRequest]
@@ -43,7 +43,7 @@ final class ZoneTransferRequests[F[_]: Sync: Client](baseUri: Uri, session: Sess
       if (create.targetProjectId != existing.targetProjectId) create.targetProjectId else None,
     )
     if (updated.needsUpdate) update(existing.id, updated, extraHeaders:_*)
-    else Sync[F].pure(existing)
+    else Concurrent[F].pure(existing)
   }
   /**
    * An idempotent create. If the model that is to be created already exists then it will be updated, or simply returned if no modifications

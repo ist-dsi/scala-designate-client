@@ -6,7 +6,6 @@ import cats.effect.{IO, Resource}
 import cats.syntax.show._
 import cats.instances.list._
 import cats.syntax.traverse._
-import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.ZoneTransferRequest
 
 class ZoneTransferRequestsSpec extends Utils {
@@ -20,15 +19,12 @@ class ZoneTransferRequestsSpec extends Utils {
     Resource.make(create)(request => transferRequests.delete(request.id))
   }
   
-  // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion its being applied inside of `Resource.use`
-  // instead of outside of `use`. We are explicit on the types params for `use` so Intellij doesn't show us an error.
-  
   "Zone Transfer Requests Service" should {
-    "list zones" in withStubZoneRequest.use[IO, Assertion] { request =>
+    "list zones" in withStubZoneRequest.use { request =>
       transferRequests.list().idempotently(_ should contain (request))
     }
     
-    "createOrUpdate zone transfer request" in withStubZone.use[IO, Assertion] { zone =>
+    "createOrUpdate zone transfer request" in withStubZone.use { zone =>
       for {
         result <- transferRequests.createOrUpdate(zone.id, ZoneTransferRequest.Create()).idempotently { request =>
           request.zoneId shouldBe zone.id
@@ -40,21 +36,21 @@ class ZoneTransferRequestsSpec extends Utils {
       } yield result
     }
     
-    "get zone transfer request (existing id)" in withStubZoneRequest.use[IO, Assertion] { request =>
+    "get zone transfer request (existing id)" in withStubZoneRequest.use { request =>
       transferRequests.get(request.id).idempotently(_.value shouldBe request)
     }
     "get zone transfer request (non-existing id)" in {
       transferRequests.get(UUID.randomUUID().toString).idempotently(_ shouldBe None)
     }
     
-    "apply zone transfer request (existing id)" in withStubZoneRequest.use[IO, Assertion] { request =>
+    "apply zone transfer request (existing id)" in withStubZoneRequest.use { request =>
       transferRequests.apply(request.id).idempotently(_ shouldBe request)
     }
     "apply zone transfer request (non-existing id)" in {
       transferRequests.apply(UUID.randomUUID().toString).attempt.idempotently(_.left.value shouldBe a [NoSuchElementException])
     }
     
-    "update zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>
+    "update zone transfer request" in withStubZoneRequest.use { request =>
       val update = ZoneTransferRequest.Update(Some("a newer and updated nicer description"))
       transferRequests.update(request.id, update).idempotently { updated =>
         val updatedRequest = request.copy(
@@ -65,11 +61,11 @@ class ZoneTransferRequestsSpec extends Utils {
       }
     }
     
-    "delete zone transfer request" in withStubZoneRequest.use[IO, Assertion] { request =>
+    "delete zone transfer request" in withStubZoneRequest.use { request =>
       transferRequests.delete(request).idempotently(_ shouldBe ())
     }
     
-    s"show zone transfer accepts" in withStubZoneRequest.use[IO, Assertion] { request =>
+    s"show zone transfer accepts" in withStubZoneRequest.use { request =>
       //This line is a fail fast mechanism, and prevents false positives from the linter
       println(show"$request")
       IO("""show"$request"""" should compile): @nowarn

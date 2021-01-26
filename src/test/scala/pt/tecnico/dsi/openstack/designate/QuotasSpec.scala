@@ -1,10 +1,8 @@
 package pt.tecnico.dsi.openstack.designate
 
 import scala.annotation.nowarn
-import cats.effect.IO
 import cats.syntax.show._
 import org.http4s.Header
-import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.designate.models.Quota
 
 class QuotasSpec extends Utils {
@@ -19,11 +17,8 @@ class QuotasSpec extends Utils {
     apiExportSize = 1000,
   )
 
-  // Intellij gets confused and thinks ioAssertion2FutureAssertion conversion its being applied inside of `Resource.use`
-  // instead of outside of `use`. We are explicit on the types params for `use` so Intellij doesn't show us an error.
-
   "The Quotas service" should {
-    s"apply quotas (existing id)" in withStubProject.use[IO, Assertion] { dummyProject =>
+    s"apply quotas (existing id)" in withStubProject.use { dummyProject =>
       designate.quotas.apply(dummyProject.id, allProjectsHeader).idempotently(_ shouldBe defaultQuota)
     }
     s"apply quotas (non-existing id)" in {
@@ -31,7 +26,7 @@ class QuotasSpec extends Utils {
       designate.quotas.apply("non-existing-id", allProjectsHeader).idempotently(_ shouldBe defaultQuota)
     }
     
-    "update quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
+    "update quotas" in withStubProject.use { dummyProject =>
       val newQuotas = Quota.Update(
         zones = Some(15),
         zoneRecords = Some(10),
@@ -48,11 +43,11 @@ class QuotasSpec extends Utils {
       }
     }
 
-    "reset quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
+    "reset quotas" in withStubProject.use { dummyProject =>
       designate.quotas.reset(dummyProject.id, allProjectsHeader).idempotently(_ shouldBe ())
     }
     
-    s"show quotas" in withStubProject.use[IO, Assertion] { dummyProject =>
+    s"show quotas" in withStubProject.use { dummyProject =>
       designate.quotas(dummyProject.id, allProjectsHeader).map { quotas =>
         //This line is a fail fast mechanism, and prevents false positives from the linter
         println(show"$quotas")
