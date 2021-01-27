@@ -13,7 +13,7 @@ object FloatingIP {
   }
   case class Create (ptrdname: String, description: String, ttl: Int)
   
-  implicit val codec: Codec.AsObject[FloatingIP] = deriveCodec(renaming.snakeCase)
+  implicit val codec: Codec[FloatingIP] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[FloatingIP] = derived.semiauto.showPretty
 }
 case class FloatingIP(

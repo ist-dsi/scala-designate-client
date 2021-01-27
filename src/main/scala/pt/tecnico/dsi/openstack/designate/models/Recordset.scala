@@ -40,7 +40,7 @@ object Recordset {
     }
   }
   
-  implicit val codec: Codec.AsObject[Recordset] = deriveCodec(renaming.snakeCase)
+  implicit val codec: Codec[Recordset] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[Recordset] = derived.semiauto.showPretty
 }
 case class Recordset(

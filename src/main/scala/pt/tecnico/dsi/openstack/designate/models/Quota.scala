@@ -31,7 +31,7 @@ object Quota {
     }
   }
   
-  implicit val codec: Codec.AsObject[Quota] = deriveCodec(renaming.snakeCase)
+  implicit val codec: Codec[Quota] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
 }
 

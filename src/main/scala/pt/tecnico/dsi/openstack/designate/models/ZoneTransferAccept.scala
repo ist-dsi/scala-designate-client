@@ -12,7 +12,7 @@ import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.Project
 
 object ZoneTransferAccept {
-  implicit val codec: Codec.AsObject[ZoneTransferAccept] = deriveCodec(renaming.snakeCase)
+  implicit val codec: Codec[ZoneTransferAccept] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[ZoneTransferAccept] = derived.semiauto.showPretty
 }
 case class ZoneTransferAccept(

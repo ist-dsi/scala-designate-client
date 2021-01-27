@@ -6,7 +6,7 @@ import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
 
 object Limit {
-  implicit val codec: Codec.AsObject[Limit] = deriveCodec(renaming.snakeCase)
+  implicit val codec: Codec[Limit] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[Limit] = derived.semiauto.showPretty
 }
 case class Limit(

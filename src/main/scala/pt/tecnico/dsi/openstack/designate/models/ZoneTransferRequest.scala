@@ -36,7 +36,7 @@ object ZoneTransferRequest {
     }
   }
   
-  implicit val codec: Codec.AsObject[ZoneTransferRequest] = deriveCodec(renaming.snakeCase)
+  implicit val codec: Codec[ZoneTransferRequest] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[ZoneTransferRequest] = derived.semiauto.showPretty
 }
 case class ZoneTransferRequest(
