@@ -15,18 +15,18 @@ class FloatingIPs[F[_]: Concurrent: Client](baseUri: Uri, session: Session) exte
   
   implicit val modelDecoder: Decoder[FloatingIP] = FloatingIP.codec
 
-  def get(region: String, floatingIpId: String, extraHeaders: Header*): F[Option[FloatingIP]] =
+  def get(region: String, floatingIpId: String, extraHeaders: Header.ToRaw*): F[Option[FloatingIP]] =
     super.getOption(wrappedAt = None, uri / s"$region:$floatingIpId", extraHeaders:_*)
-  def apply(region: String, floatingIpId: String, extraHeaders: Header*): F[FloatingIP] =
+  def apply(region: String, floatingIpId: String, extraHeaders: Header.ToRaw*): F[FloatingIP] =
     get(region, floatingIpId, extraHeaders:_*).flatMap {
       case Some(floatingIp) => F.pure(floatingIp)
       case None => F.raiseError(new NoSuchElementException(s"""Could not find floatingip in region "$region" with id "$floatingIpId"."""))
     }
 
-  def set(region: String, floatingIpId: String, floatingIp: FloatingIP.Create, extraHeaders: Header*)
+  def set(region: String, floatingIpId: String, floatingIp: FloatingIP.Create, extraHeaders: Header.ToRaw*)
          (implicit encoder: Encoder[FloatingIP.Create]): F[FloatingIP] =
     super.patch(wrappedAt = None, floatingIp, uri / s"$region:$floatingIpId", extraHeaders:_*)
 
-  def unset(region: String, floatingIP: String, extraHeaders: Header*): F[Unit] =
+  def unset(region: String, floatingIP: String, extraHeaders: Header.ToRaw*): F[Unit] =
     super.patch(wrappedAt = None, Map("ptrdname" -> None), uri / s"$region:$floatingIP", extraHeaders:_*)
 }

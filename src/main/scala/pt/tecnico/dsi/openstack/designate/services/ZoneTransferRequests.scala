@@ -23,7 +23,7 @@ final class ZoneTransferRequests[F[_]: Concurrent: Client](baseUri: Uri, session
   override implicit val modelDecoder: Decoder[ZoneTransferRequest] = ZoneTransferRequest.codec
   override implicit val updateEncoder: Encoder[ZoneTransferRequest.Update] = ZoneTransferRequest.Update.codec
   
-  def create(zoneId: String, value: ZoneTransferRequest.Create, extraHeaders: Header*): F[ZoneTransferRequest] =
+  def create(zoneId: String, value: ZoneTransferRequest.Create, extraHeaders: Header.ToRaw*): F[ZoneTransferRequest] =
     super.post(wrappedAt, value, createUri(zoneId) / pluralName, extraHeaders:_*)
   
   /**
@@ -36,7 +36,7 @@ final class ZoneTransferRequests[F[_]: Concurrent: Client](baseUri: Uri, session
    * @return the existing model if no modifications are required, otherwise the updated model.
    */
   def defaultResolveConflict(existing: ZoneTransferRequest, create: ZoneTransferRequest.Create, @nowarn keepExistingElements: Boolean,
-    extraHeaders: Seq[Header])
+    extraHeaders: Seq[Header.ToRaw])
   : F[ZoneTransferRequest] = {
     val updated = ZoneTransferRequest.Update(
       if (create.description != existing.description) create.description else None,
@@ -56,7 +56,7 @@ final class ZoneTransferRequests[F[_]: Concurrent: Client](baseUri: Uri, session
    * @param extraHeaders extra headers to be used. The `authToken` header is always added.
    * @return the created model, or if it already exists the existing or updated model.
    */
-  def createOrUpdate(zoneId: String, create: ZoneTransferRequest.Create, extraHeaders: Header*): F[ZoneTransferRequest] =
+  def createOrUpdate(zoneId: String, create: ZoneTransferRequest.Create, extraHeaders: Header.ToRaw*): F[ZoneTransferRequest] =
     createOrUpdate(zoneId, create, keepExistingElements = true, extraHeaders:_*)
   /**
    * An idempotent create. If the model that is to be created already exists then it will be updated, or simply returned if no modifications
@@ -78,7 +78,7 @@ final class ZoneTransferRequests[F[_]: Concurrent: Client](baseUri: Uri, session
    *   Setting it to `false` will follow point 2, thus making the update more stringent.
    * @return the created model, or if it already exists the existing or updated model.
    */
-  def createOrUpdate(zoneId: String, create: ZoneTransferRequest.Create, keepExistingElements: Boolean, extraHeaders: Header*): F[ZoneTransferRequest] =
+  def createOrUpdate(zoneId: String, create: ZoneTransferRequest.Create, keepExistingElements: Boolean, extraHeaders: Header.ToRaw*): F[ZoneTransferRequest] =
     createOrUpdate(zoneId, create, keepExistingElements, extraHeaders)()
   
   /**
@@ -102,7 +102,7 @@ final class ZoneTransferRequests[F[_]: Concurrent: Client](baseUri: Uri, session
    *                        on a model that already exists. By default it just invokes [[defaultResolveConflict]].
    * @return the created model, or if it already exists the existing or updated model.
    */
-  def createOrUpdate(zoneId: String, create: ZoneTransferRequest.Create, keepExistingElements: Boolean = true, extraHeaders: Seq[Header] = Seq.empty)
+  def createOrUpdate(zoneId: String, create: ZoneTransferRequest.Create, keepExistingElements: Boolean = true, extraHeaders: Seq[Header.ToRaw] = Seq.empty)
     (resolveConflict: (ZoneTransferRequest, ZoneTransferRequest.Create) => F[ZoneTransferRequest] = defaultResolveConflict(_, _, keepExistingElements,
       extraHeaders)): F[ZoneTransferRequest] = {
     super.postHandleConflict(wrappedAt, create, createUri(zoneId) / "transfer_requests", extraHeaders) {
@@ -113,6 +113,6 @@ final class ZoneTransferRequests[F[_]: Concurrent: Client](baseUri: Uri, session
     }
   }
   
-  override def update(id: String, value: ZoneTransferRequest.Update, extraHeaders: Header*): F[ZoneTransferRequest] =
+  override def update(id: String, value: ZoneTransferRequest.Update, extraHeaders: Header.ToRaw*): F[ZoneTransferRequest] =
     super.patch(wrappedAt, value, uri / id, extraHeaders:_*)
 }

@@ -3,10 +3,11 @@ package pt.tecnico.dsi.openstack.designate
 import scala.annotation.nowarn
 import cats.syntax.show._
 import org.http4s.Header
+import org.typelevel.ci.CIString
 import pt.tecnico.dsi.openstack.designate.models.Quota
 
 class QuotasSpec extends Utils {
-  val allProjectsHeader: Header = Header("x-auth-all-projects", "true")
+  val allProjectsHeader: Header.Raw = Header.Raw(CIString("X-Auth-All-Projects"), "true")
 
   // These are the default quotas for the Designate we are testing against
   val defaultQuota = Quota(

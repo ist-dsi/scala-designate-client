@@ -18,13 +18,13 @@ final class ZoneTransferAccepts[F[_]: Concurrent: Client](baseUri: Uri, session:
   
   override implicit val modelDecoder: Decoder[ZoneTransferAccept] = ZoneTransferAccept.codec
   
-  def stream(status: Status, extraHeaders: Header*): Stream[F, ZoneTransferAccept] =
+  def stream(status: Status, extraHeaders: Header.ToRaw*): Stream[F, ZoneTransferAccept] =
     stream(Query.fromPairs("status" -> status.toString.toLowerCase), extraHeaders:_*)
   
-  def list(status: Status, extraHeaders: Header*): F[List[ZoneTransferAccept]] =
+  def list(status: Status, extraHeaders: Header.ToRaw*): F[List[ZoneTransferAccept]] =
     list(Query.fromPairs("status" -> status.toString), extraHeaders:_*)
   
-  def create(key: String, zoneTransferRequestId: String, extraHeaders: Header*): F[ZoneTransferAccept] =
+  def create(key: String, zoneTransferRequestId: String, extraHeaders: Header.ToRaw*): F[ZoneTransferAccept] =
     super.post(wrappedAt, Map("key" -> key, "zone_transfer_request_id" -> zoneTransferRequestId), uri, extraHeaders:_*)
   
   /**
@@ -37,7 +37,7 @@ final class ZoneTransferAccepts[F[_]: Concurrent: Client](baseUri: Uri, session:
    * @param zoneTransferRequestId id of the zone transfer request
    * @param extraHeaders extra headers to be used. The `authToken` header is always added.
    */
-  def createWithDeduplication(key: String, zoneTransferRequestId: String, extraHeaders: Header*): F[ZoneTransferAccept] = {
+  def createWithDeduplication(key: String, zoneTransferRequestId: String, extraHeaders: Header.ToRaw*): F[ZoneTransferAccept] = {
     // Once a zone transfer is accepted it is not possible to accept it again. This means this method is not idempotent.
     // However we can make it idempotent: if an accept for `zoneTransferRequestId` already exists we return it, being careful
     // to ensure the key is set to the correct value. Otherwise we create the accept.

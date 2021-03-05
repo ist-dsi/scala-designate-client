@@ -6,20 +6,21 @@ import cats.effect.{IO, Resource}
 import cats.syntax.show._
 import org.http4s.{Header, Query}
 import org.scalatest.Assertion
+import org.typelevel.ci.CIString
 import pt.tecnico.dsi.openstack.designate.models.{Status, ZoneTransferAccept, ZoneTransferRequest}
 
 class ZoneTransferAcceptsSpec extends Utils {
   import designate.zones.{transferAccepts, transferRequests}
   
-  val withStubZoneRequest: Resource[IO, (ZoneTransferRequest, Header)] = for {
+  val withStubZoneRequest: Resource[IO, (ZoneTransferRequest, Header.Raw)] = for {
     zone <- withStubZone
     project <- withStubProject
     create = transferRequests.create(zone.id, ZoneTransferRequest.Create(targetProjectId = Some(project.id)))
     transferRequestResource <- Resource.make(create)(request => transferRequests.delete(request.id))
-  } yield (transferRequestResource, Header("x-auth-sudo-project-id", project.id))
+  } yield (transferRequestResource, Header.Raw(CIString("X-Auth-Sudo-Project-Id"), project.id))
   
   // It does not make sense to create a Resource for the Accept since Accepts cannot be deleted
-  def withStubZoneAccept(test: (ZoneTransferAccept, Header) => IO[Assertion]): IO[Assertion] =
+  def withStubZoneAccept(test: (ZoneTransferAccept, Header.Raw) => IO[Assertion]): IO[Assertion] =
     withStubZoneRequest.use { case (request, sudoProjectIdHeader) =>
       transferAccepts.create(request.key, request.id, sudoProjectIdHeader)
         .flatMap(test(_, sudoProjectIdHeader))

@@ -19,7 +19,7 @@ class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    * Designate always returns a Quota even if the project does not exist. That is why there is no method called `get`.
    * @param projectId The UUID of the project.
    */
-  def apply(projectId: String, extraHeaders: Header*): F[Quota] =
+  def apply(projectId: String, extraHeaders: Header.ToRaw*): F[Quota] =
     super.get(wrappedAt = None, uri / projectId, extraHeaders:_*)
   
   /**
@@ -28,12 +28,12 @@ class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    * @param projectId ID for the project.
    * @param quota the new quotas.
    */
-  override def update(projectId: String, quota: Quota.Update, extraHeaders: Header*): F[Quota] =
+  override def update(projectId: String, quota: Quota.Update, extraHeaders: Header.ToRaw*): F[Quota] =
     super.patch(wrappedAt = None, quota, uri / projectId, extraHeaders:_*)
   
   /**
    * Reset all quotas for `projectId` to default.
    * @param projectId ID for the project.
    */
-  def reset(projectId: String, extraHeaders: Header*): F[Unit] = delete(uri / projectId, extraHeaders:_*)
+  def reset(projectId: String, extraHeaders: Header.ToRaw*): F[Unit] = delete(uri / projectId, extraHeaders:_*)
 }
