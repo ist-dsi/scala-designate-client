@@ -42,7 +42,7 @@ libraryDependencies ++= Seq(
   "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.10.0",
   "com.beachape"    %% "enumeratum-circe"      % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"       % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"             % "3.2.5" % Test,
+  "org.scalatest"   %% "scalatest"             % "3.2.6" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
