@@ -1,12 +1,11 @@
 package pt.tecnico.dsi.openstack.designate
 
-import scala.annotation.nowarn
-import cats.syntax.show._
+import cats.syntax.show.*
 import org.http4s.Header
 import org.typelevel.ci.CIString
 import pt.tecnico.dsi.openstack.designate.models.Quota
 
-class QuotasSpec extends Utils {
+class QuotasSpec extends Utils:
   val allProjectsHeader: Header.Raw = Header.Raw(CIString("X-Auth-All-Projects"), "true")
 
   // These are the default quotas for the Designate we are testing against
@@ -18,14 +17,13 @@ class QuotasSpec extends Utils {
     apiExportSize = 1000,
   )
 
-  "The Quotas service" should {
+  "The Quotas service" should:
     s"apply quotas (existing id)" in withStubProject.use { dummyProject =>
       designate.quotas.apply(dummyProject.id, allProjectsHeader).idempotently(_ shouldBe defaultQuota)
     }
-    s"apply quotas (non-existing id)" in {
+    s"apply quotas (non-existing id)" in:
       // This is not a mistake in the test. Designate returns a Quota even if the project does not exist :faceplam:
       designate.quotas.apply("non-existing-id", allProjectsHeader).idempotently(_ shouldBe defaultQuota)
-    }
     
     "update quotas" in withStubProject.use { dummyProject =>
       val newQuotas = Quota.Update(
@@ -52,10 +50,9 @@ class QuotasSpec extends Utils {
       designate.quotas(dummyProject.id, allProjectsHeader).map { quotas =>
         //This line is a fail fast mechanism, and prevents false positives from the linter
         println(show"$quotas")
-        """show"$quotas"""" should compile: @nowarn
+        """show"$quotas"""" should compile
       }
     }
-  }
 
   "Designate Client" should {
     "show limits" in designate.limits.map { limit =>
@@ -69,4 +66,3 @@ class QuotasSpec extends Utils {
       limit.minTtl shouldBe None
     }
   }
-}

@@ -2,31 +2,21 @@ package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
 import cats.derived.ShowPretty
-import cats.{Show, derived}
-import enumeratum.EnumEntry.Uppercase
-import enumeratum.{CirceEnum, Enum, EnumEntry}
+import cats.Show
+import cats.derived.derived
 import io.circe.Codec
-import io.circe.derivation.{deriveCodec, renaming}
-import io.chrisdavenport.cats.time.localdatetimeInstances
+import io.circe.derivation.{Configuration, ConfiguredCodec, ConfiguredEnumCodec}
+import org.typelevel.cats.time.instances.localdatetime.given
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.Project
 
-object Zone {
-  sealed trait Type extends EnumEntry with Uppercase
-  case object Type extends Enum[Type] with CirceEnum[Type] {
-    case object Primary   extends Type
-    case object Secondary extends Type
-    
-    val values: IndexedSeq[Type] = findValues
-    
-    implicit val show: Show[Type] = Show.fromToString
-  }
+object Zone:
+  object Type:
+    given Codec[Type] = ConfiguredEnumCodec.derive(_.toUpperCase)
+  enum Type derives Show:
+    case Primary, Secondary
 
-  object Create {
-    implicit val codec: Codec[Create] = deriveCodec(renaming.snakeCase)
-    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
-  }
   case class Create(
     name: String,
     email: String,
@@ -35,27 +25,17 @@ object Zone {
     `type`: Zone.Type = Zone.Type.Primary,
     masters: Option[List[String]] = None,
     attributes: Map[String, String] = Map.empty
-  )
+  ) derives ConfiguredCodec, ShowPretty
   
-  object Update {
-    implicit val codec: Codec[Update] = deriveCodec(renaming.snakeCase)
-    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
-  }
   case class Update(
     email: Option[String] = None,
     ttl: Option[Int] = None,
     description: Option[String] = None
-  ) {
-    lazy val needsUpdate: Boolean = {
+  ) derives ConfiguredCodec, ShowPretty:
+    lazy val needsUpdate: Boolean =
       // We could implement this with the next line, but that implementation is less reliable if the fields of this class change
       //  productIterator.asInstanceOf[Iterator[Option[Any]]].exists(_.isDefined)
       List(email, ttl, description).exists(_.isDefined)
-    }
-  }
-  
-  implicit val codec: Codec[Zone] = deriveCodec(renaming.snakeCase)
-  implicit val show: ShowPretty[Zone] = derived.semiauto.showPretty
-}
 case class Zone(
   id: String,
   name: String,
@@ -75,6 +55,5 @@ case class Zone(
   masters: List[String] = List.empty,
   attributes: Map[String, String] = Map.empty,
   links: List[Link] = List.empty,
-) extends Identifiable {
-  def project[F[_]](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
-}
+) extends Identifiable derives ConfiguredCodec, ShowPretty:
+  def project[F[_]](using keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)

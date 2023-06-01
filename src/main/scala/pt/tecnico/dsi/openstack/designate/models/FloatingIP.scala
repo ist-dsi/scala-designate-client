@@ -1,21 +1,16 @@
 package pt.tecnico.dsi.openstack.designate.models
 
-import cats.derived
+import cats.derived.derived
 import cats.derived.ShowPretty
-import io.circe.{Codec, Encoder}
-import io.circe.derivation.{deriveCodec, deriveEncoder, renaming}
+import io.circe.derivation.{ConfiguredEncoder, ConfiguredCodec}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 
-object FloatingIP {
-  object Create {
-    implicit val decoder: Encoder[Create] = deriveEncoder(renaming.snakeCase)
-    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
-  }
-  case class Create (ptrdname: String, description: String, ttl: Int)
-  
-  implicit val codec: Codec[FloatingIP] = deriveCodec(renaming.snakeCase)
-  implicit val show: ShowPretty[FloatingIP] = derived.semiauto.showPretty
-}
+object FloatingIP:
+  case class Create(
+    ptrdname: String,
+    description: String,
+    ttl: Int,
+  ) derives ConfiguredEncoder, ShowPretty
 case class FloatingIP(
   id: String,
   ptrdname: String,
@@ -25,4 +20,4 @@ case class FloatingIP(
   status: Status,
   action: Action,
   links: List[Link] = List.empty,
-) extends Identifiable
+) extends Identifiable derives ConfiguredCodec, ShowPretty

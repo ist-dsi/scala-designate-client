@@ -1,20 +1,18 @@
 package pt.tecnico.dsi.openstack.designate
 
 import cats.effect.unsafe.implicits.global
-import scala.annotation.nowarn
 import cats.effect.{IO, Resource}
-import cats.syntax.show._
+import cats.syntax.show.*
 import org.scalatest.BeforeAndAfterAll
 import pt.tecnico.dsi.openstack.designate.models.Recordset
 import pt.tecnico.dsi.openstack.designate.services.Recordsets
 
-class RecordsetsSpec extends Utils with BeforeAndAfterAll {
+class RecordsetsSpec extends Utils with BeforeAndAfterAll:
   // This way we use the same zone for every test, and make the logs smaller and easier to debug.
   val (zone, deleteZone) = withStubZone.allocated.unsafeRunSync()
-  override protected def afterAll(): Unit = {
+  override protected def afterAll(): Unit =
     deleteZone.unsafeRunSync()
     super.afterAll()
-  }
   
   val recordsets: Recordsets[IO] = designate.zones.recordsets(zone.id)
   
@@ -37,7 +35,7 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
         `type` = "A",
         records = List("10.1.0.2"),
       )
-      recordsets.createOrUpdate(recordsetCreate).idempotently { recordset =>
+      recordsets.createOrUpdate(recordsetCreate)().idempotently { recordset =>
         recordset.`type` shouldBe recordsetCreate.`type`
         recordset.zoneId shouldBe zone.id
         recordset.description shouldBe recordsetCreate.description
@@ -46,7 +44,6 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
         recordset.name shouldBe recordsetCreate.name
       }
     }
-    
     "update recordsets" in withStubRecord.use { recordset =>
       val recordsetUpdate = Recordset.Update(
         ttl = Some(3601),
@@ -59,27 +56,26 @@ class RecordsetsSpec extends Utils with BeforeAndAfterAll {
         updated.records shouldBe recordsetUpdate.records.value
       }
     }
-    
+
     "delete recordsets" in withStubRecord.use { recordset =>
-      recordsets.delete(recordset.id).idempotently(_ shouldBe ())
+      recordsets.delete(recordset.id).idempotently(_ shouldBe())
     }
-    
+
     "list recordsets" in withStubRecord.use { recordset =>
       recordsets.list().idempotently { list =>
-        list should contain (recordset)
+        list should contain(recordset)
       }
     }
-    
+
     s"show recordsets" in withStubRecord.use { model =>
       //This line is a fail fast mechanism, and prevents false positives from the linter
       println(show"$model")
-      IO("""show"$model"""" should compile): @nowarn
+      IO("""show"$model"""" should compile)
+    }
+
+    "Designate client" should {
+      "list recordsets" in {
+        designate.recordsets.compile.toList.map(_ should not be empty)
+      }
     }
   }
-  
-  "Designate client" should {
-    "list recordsets" in {
-      designate.recordsets.compile.toList.map(_ should not be empty)
-    }
-  }
-}

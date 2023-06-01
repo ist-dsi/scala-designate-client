@@ -1,17 +1,11 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import cats.Show
-import enumeratum.EnumEntry.Uppercase
-import enumeratum.{CirceEnum, Enum, EnumEntry}
+import cats.derived.derived
+import io.circe.Codec
+import io.circe.derivation.{Configuration, ConfiguredEnumCodec}
 
-sealed trait Status extends EnumEntry with Uppercase
-case object Status extends Enum[Status] with CirceEnum[Status] {
-  case object Complete extends Status
-  case object Error extends Status
-  case object Pending extends Status
-  case object Active extends Status
-
-  val values: IndexedSeq[Status] = findValues
-  
-  implicit val show: Show[Status] = Show.fromToString
-}
+object Status:
+  given Codec[Status] = ConfiguredEnumCodec.derive(_.toUpperCase)
+enum Status derives Show:
+  case Complete, Error, Pending, Active

@@ -1,48 +1,33 @@
 package pt.tecnico.dsi.openstack.designate.models
 
 import java.time.LocalDateTime
-import cats.derived
+import cats.derived.derived
 import cats.derived.ShowPretty
-import io.circe.Codec
-import io.circe.derivation.{deriveCodec, renaming}
-import io.chrisdavenport.cats.time.localdatetimeInstances
+import io.circe.derivation.ConfiguredCodec
+import org.typelevel.cats.time.instances.localdatetime.given
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.designate.DesignateClient
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.Project
 
-object Recordset {
-  object Create {
-    implicit val codec: Codec.AsObject[Create] = deriveCodec(renaming.snakeCase)
-    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
-  }
+object Recordset:
   case class Create(
     name: String,
     `type`: String,
     records: List[String],
     ttl: Option[Int] = None,
     description: Option[String] = None,
-  )
+  ) derives ConfiguredCodec, ShowPretty
   
-  object Update {
-    implicit val codec: Codec.AsObject[Update] = deriveCodec(renaming.snakeCase)
-    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
-  }
   case class Update(
     records: Option[List[String]] = None,
     ttl: Option[Int] = None,
     description: Option[String] = None,
-  ) {
-    lazy val needsUpdate: Boolean = {
+  ) derives ConfiguredCodec, ShowPretty:
+    lazy val needsUpdate: Boolean =
       // We could implement this with the next line, but that implementation is less reliable if the fields of this class change
       //  productIterator.asInstanceOf[Iterator[Option[Any]]].exists(_.isDefined)
       List(records, ttl, description).exists(_.isDefined)
-    }
-  }
-  
-  implicit val codec: Codec[Recordset] = deriveCodec(renaming.snakeCase)
-  implicit val show: ShowPretty[Recordset] = derived.semiauto.showPretty
-}
 case class Recordset(
   id: String,
   name: String,
@@ -59,8 +44,7 @@ case class Recordset(
   createdAt: LocalDateTime,
   updatedAt: Option[LocalDateTime],
   links: List[Link] = List.empty,
-) extends Identifiable {
-  def project[F[_]](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
-  def zone[F[_]](implicit designate: DesignateClient[F]): F[Zone] = designate.zones(zoneId)
-}
+) extends Identifiable derives ConfiguredCodec, ShowPretty:
+  def project[F[_]](using keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
+  def zone[F[_]](using designate: DesignateClient[F]): F[Zone] = designate.zones(zoneId)
 

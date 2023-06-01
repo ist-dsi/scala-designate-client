@@ -10,9 +10,9 @@ import pt.tecnico.dsi.openstack.keystone.models.Session
 
 class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   extends PartialCrudService[F](baseUri, "quota", session.authToken, wrapped = false)
-    with UpdateOperations[F, Quota, Quota.Update] {
-  override implicit val modelDecoder: Decoder[Quota] = Quota.codec
-  override implicit val updateEncoder: Encoder[Quota.Update] = Quota.Update.codec
+    with UpdateOperations[F, Quota, Quota.Update]:
+  override given modelDecoder: Decoder[Quota] = Quota.derived$ConfiguredCodec
+  override given updateEncoder: Encoder[Quota.Update] = Quota.Update.derived$ConfiguredCodec
   
   /**
    * Get quotas for a project.
@@ -20,7 +20,7 @@ class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    * @param projectId The UUID of the project.
    */
   def apply(projectId: String, extraHeaders: Header.ToRaw*): F[Quota] =
-    super.get(wrappedAt = None, uri / projectId, extraHeaders:_*)
+    super.get(wrappedAt = None, uri / projectId, extraHeaders*)
   
   /**
    * Set the quotas of `projectId`
@@ -29,11 +29,10 @@ class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    * @param quota the new quotas.
    */
   override def update(projectId: String, quota: Quota.Update, extraHeaders: Header.ToRaw*): F[Quota] =
-    super.patch(wrappedAt = None, quota, uri / projectId, extraHeaders:_*)
+    super.patch(wrappedAt = None, quota, uri / projectId, extraHeaders*)
   
   /**
    * Reset all quotas for `projectId` to default.
    * @param projectId ID for the project.
    */
-  def reset(projectId: String, extraHeaders: Header.ToRaw*): F[Unit] = delete(uri / projectId, extraHeaders:_*)
-}
+  def reset(projectId: String, extraHeaders: Header.ToRaw*): F[Unit] = delete(uri / projectId, extraHeaders*)

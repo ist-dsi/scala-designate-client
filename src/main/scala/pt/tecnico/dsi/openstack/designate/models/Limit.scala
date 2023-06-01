@@ -1,14 +1,9 @@
 package pt.tecnico.dsi.openstack.designate.models
 
-import cats.derived
+import cats.derived.derived
 import cats.derived.ShowPretty
-import io.circe.Codec
-import io.circe.derivation.{deriveCodec, renaming}
+import io.circe.derivation.ConfiguredCodec
 
-object Limit {
-  implicit val codec: Codec[Limit] = deriveCodec(renaming.snakeCase)
-  implicit val show: ShowPretty[Limit] = derived.semiauto.showPretty
-}
 case class Limit(
   maxPageLimit: Int,
   maxRecordsetNameLength: Int,
@@ -18,5 +13,5 @@ case class Limit(
   maxZoneRecordsets: Int,
   maxZones: Int,
   minTtl: Option[Int]
-)
+) derives ConfiguredCodec, ShowPretty
 
