@@ -10,7 +10,7 @@ import pt.tecnico.dsi.openstack.designate.models.Recordset
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
 final class Recordsets[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
-  extends CrudService[F, Recordset, Recordset.Create, Recordset.Update](baseUri, "recordset", session.authToken, wrapped = false) {
+  extends CrudService[F, Recordset, Recordset.Create, Recordset.Update](baseUri, "recordset", session.authToken, wrapped = false):
 
   def getByName(name: String, extraHeaders: Header.ToRaw*): F[Option[Recordset]] =
     stream(Query.fromPairs("name" -> name), extraHeaders*).compile.last
@@ -37,4 +37,3 @@ final class Recordsets[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
         getLogger.info(s"createOrUpdate: found unique $name (id: ${existing.id}) with the correct name and type.")
         resolveConflict(existing, create)
       }
-}
